@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тендер — tender.gov.mn</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0c10; --surface: #111318; --surface2: #181c24;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+  --accent: #00e5a0; --text: #e8ecf0; --text2: #7a8494; --text3: #4a5260;
+  --work: #4a9eff; --work-bg: rgba(74,158,255,0.1);
+  --goods: #00e5a0; --goods-bg: rgba(0,229,160,0.08);
+  --compare: #f5a623; --compare-bg: rgba(245,166,35,0.1);
+  --open: #a78bfa; --open-bg: rgba(167,139,250,0.1);
+  --danger: #ff5f6e;
+  --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(0,229,160,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,0.015) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+
+/* UPLOAD */
+.upload-screen { position:fixed; inset:0; z-index:999; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--bg); }
+.upload-screen.hidden { display:none; }
+.upload-logo { font-family:var(--mono); font-size:13px; font-weight:600; color:var(--accent); letter-spacing:.1em; text-transform:uppercase; display:flex; align-items:center; gap:8px; margin-bottom:48px; }
+.logo-dot { width:8px; height:8px; background:var(--accent); border-radius:50%; animation:pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,229,160,.4)} 50%{opacity:.7;box-shadow:0 0 0 6px rgba(0,229,160,0)} }
+.upload-box { width:460px; border:1.5px dashed rgba(0,229,160,.25); border-radius:16px; padding:52px 40px; text-align:center; cursor:pointer; transition:all .2s; background:var(--surface); }
+.upload-box:hover, .upload-box.drag-over { border-color:var(--accent); background:rgba(0,229,160,.04); }
+.upload-icon { font-size:40px; margin-bottom:18px; }
+.upload-title { font-family:var(--mono); font-size:14px; font-weight:600; color:var(--text); margin-bottom:8px; letter-spacing:.03em; }
+.upload-sub { font-size:13px; color:var(--text3); line-height:1.7; margin-bottom:28px; }
+.upload-btn { display:inline-flex; align-items:center; gap:8px; background:rgba(0,229,160,.09); border:1px solid rgba(0,229,160,.28); border-radius:8px; color:var(--accent); font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.08em; padding:11px 24px; cursor:pointer; transition:all .2s; text-transform:uppercase; }
+.upload-btn:hover { background:rgba(0,229,160,.16); border-color:rgba(0,229,160,.5); }
+#file-input { display:none; }
+.upload-formats { margin-top:18px; font-size:11px; color:var(--text3); font-family:var(--mono); }
+.upload-error { margin-top:14px; font-size:12px; color:var(--danger); font-family:var(--mono); min-height:16px; }
+
+/* APP */
+.app { position:relative; z-index:1; display:flex; flex-direction:column; min-height:100vh; }
+header { border-bottom:1px solid var(--border); padding:0 32px; height:60px; display:flex; align-items:center; gap:24px; position:sticky; top:0; background:rgba(10,12,16,.92); backdrop-filter:blur(12px); z-index:100; }
+.logo { font-family:var(--mono); font-size:13px; font-weight:600; color:var(--accent); letter-spacing:.08em; text-transform:uppercase; display:flex; align-items:center; gap:8px; }
+.header-meta { margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--text3); letter-spacing:.05em; }
+.header-reset { font-family:var(--mono); font-size:11px; color:var(--text3); background:none; border:1px solid var(--border2); border-radius:5px; padding:5px 12px; cursor:pointer; transition:all .15s; }
+.header-reset:hover { color:var(--text); border-color:var(--text3); }
+
+.stats-bar { display:grid; grid-template-columns:repeat(4,1fr); border-bottom:1px solid var(--border); background:var(--surface); }
+.stat-item { padding:20px 28px; border-right:1px solid var(--border); position:relative; overflow:hidden; }
+.stat-item:last-child { border-right:none; }
+.stat-item::after { content:''; position:absolute; bottom:0;left:0;right:0; height:2px; background:var(--accent); transform:scaleX(0); transform-origin:left; transition:transform .3s; }
+.stat-item:hover::after { transform:scaleX(1); }
+.stat-label { font-family:var(--mono); font-size:10px; font-weight:500; letter-spacing:.1em; color:var(--text3); text-transform:uppercase; margin-bottom:6px; }
+.stat-num { font-family:var(--mono); font-size:28px; font-weight:600; line-height:1; }
+.stat-sub { font-size:11px; color:var(--text3); margin-top:4px; font-family:var(--mono); }
+
+.main { display:flex; flex:1; }
+.sidebar { width:256px; flex-shrink:0; border-right:1px solid var(--border); padding:22px 18px; position:sticky; top:60px; height:calc(100vh - 60px); overflow-y:auto; background:var(--surface); }
+.sidebar-section { margin-bottom:26px; }
+.sidebar-title { font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--text3); margin-bottom:10px; padding-bottom:7px; border-bottom:1px solid var(--border); }
+.search-wrap { position:relative; }
+.search-icon { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text3); font-size:13px; pointer-events:none; }
+.search-input { width:100%; background:var(--bg); border:1px solid var(--border2); border-radius:6px; color:var(--text); font-family:var(--sans); font-size:13px; padding:9px 10px 9px 32px; outline:none; transition:border-color .2s; }
+.search-input::placeholder { color:var(--text3); }
+.search-input:focus { border-color:var(--accent); }
+.filter-group { display:flex; flex-direction:column; gap:4px; }
+.filter-btn { display:flex; align-items:center; justify-content:space-between; padding:7px 10px; border-radius:6px; border:1px solid transparent; background:transparent; color:var(--text2); font-family:var(--sans); font-size:13px; cursor:pointer; transition:all .15s; text-align:left; width:100%; }
+.filter-btn:hover { background:var(--surface2); color:var(--text); }
+.filter-btn.active { background:rgba(0,229,160,.08); border-color:rgba(0,229,160,.2); color:var(--accent); }
+.filter-btn .count { font-family:var(--mono); font-size:11px; color:var(--text3); background:var(--bg); padding:1px 6px; border-radius:10px; }
+.filter-btn.active .count { background:rgba(0,229,160,.15); color:var(--accent); }
+.org-list { display:flex; flex-direction:column; gap:3px; max-height:280px; overflow-y:auto; }
+.org-btn { display:flex; align-items:center; gap:7px; padding:6px 8px; border-radius:5px; border:none; background:transparent; color:var(--text2); font-family:var(--sans); font-size:12px; cursor:pointer; transition:all .15s; text-align:left; width:100%; }
+.org-btn:hover { background:var(--surface2); color:var(--text); }
+.org-btn.active { color:var(--accent); background:rgba(0,229,160,.07); }
+.org-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.org-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.content { flex:1; overflow:hidden; }
+.toolbar { display:flex; align-items:center; gap:12px; padding:14px 24px; border-bottom:1px solid var(--border); background:var(--surface); }
+.toolbar-count { font-family:var(--mono); font-size:12px; color:var(--text3); margin-right:auto; }
+.toolbar-count span { color:var(--text); font-weight:500; }
+.sort-label { font-size:12px; color:var(--text3); font-family:var(--mono); }
+.sort-select { background:var(--bg); border:1px solid var(--border2); border-radius:5px; color:var(--text); font-family:var(--mono); font-size:12px; padding:6px 10px; outline:none; cursor:pointer; }
+.sort-select:focus { border-color:var(--accent); }
+
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; }
+thead tr { border-bottom:1px solid var(--border2); background:var(--surface); }
+th { font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--text3); padding:13px 14px; text-align:left; white-space:nowrap; cursor:pointer; user-select:none; }
+th:hover { color:var(--text2); }
+tbody tr { border-bottom:1px solid var(--border); transition:background .1s; cursor:pointer; animation:fadeRow .12s ease both; }
+tbody tr:hover { background:var(--surface); }
+td { padding:13px 14px; vertical-align:middle; }
+.td-num { font-family:var(--mono); font-size:11px; color:var(--text3); white-space:nowrap; }
+.td-code { font-family:var(--mono); font-size:11px; color:var(--accent); white-space:nowrap; }
+.td-code a { color:inherit; text-decoration:none; }
+.td-code a:hover { text-decoration:underline; }
+.td-name { max-width:260px; font-size:13px; color:var(--text); }
+.td-org { font-size:12px; color:var(--text2); max-width:170px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.badge { display:inline-flex; align-items:center; font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.06em; padding:3px 7px; border-radius:4px; white-space:nowrap; }
+.badge-work { background:var(--work-bg); color:var(--work); border:1px solid rgba(74,158,255,.2); }
+.badge-goods { background:var(--goods-bg); color:var(--goods); border:1px solid rgba(0,229,160,.2); }
+.badge-other { background:rgba(120,130,150,.1); color:var(--text3); border:1px solid var(--border); }
+.badge-open { background:var(--open-bg); color:var(--open); border:1px solid rgba(167,139,250,.2); }
+.badge-compare { background:var(--compare-bg); color:var(--compare); border:1px solid rgba(245,166,35,.2); }
+.td-deadline { font-family:var(--mono); font-size:12px; white-space:nowrap; }
+.deadline-today { color:var(--danger); font-weight:600; }
+.deadline-soon { color:var(--compare); }
+.deadline-ok { color:var(--text2); }
+
+.pagination { display:flex; align-items:center; justify-content:space-between; padding:14px 24px; border-top:1px solid var(--border); background:var(--surface); }
+.page-info { font-family:var(--mono); font-size:12px; color:var(--text3); }
+.page-info b { color:var(--text); }
+.page-btns { display:flex; gap:4px; }
+.page-btn { width:32px; height:32px; border:1px solid var(--border2); border-radius:5px; background:transparent; color:var(--text2); font-family:var(--mono); font-size:12px; cursor:pointer; transition:all .15s; display:flex; align-items:center; justify-content:center; }
+.page-btn:hover:not(:disabled) { background:var(--surface2); color:var(--text); }
+.page-btn.current { background:rgba(0,229,160,.1); border-color:rgba(0,229,160,.3); color:var(--accent); }
+.page-btn:disabled { opacity:.3; cursor:not-allowed; }
+.empty { padding:80px 28px; text-align:center; color:var(--text3); }
+.empty-icon { font-size:36px; margin-bottom:14px; }
+.empty h3 { font-size:15px; font-weight:500; color:var(--text2); margin-bottom:6px; }
+
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:199; display:none; backdrop-filter:blur(2px); }
+.overlay.show { display:block; }
+.detail-panel { position:fixed; top:0; right:0; width:420px; height:100vh; background:var(--surface); border-left:1px solid var(--border2); z-index:200; transform:translateX(100%); transition:transform .28s cubic-bezier(.4,0,.2,1); overflow-y:auto; padding:28px 28px 40px; }
+.detail-panel.open { transform:translateX(0); }
+.panel-close { position:absolute; top:20px; right:20px; width:32px; height:32px; border:1px solid var(--border2); border-radius:5px; background:transparent; color:var(--text2); cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.panel-close:hover { background:var(--surface2); color:var(--text); }
+.panel-badge { margin-bottom:16px; display:flex; gap:8px; flex-wrap:wrap; }
+.panel-title { font-size:17px; font-weight:500; color:var(--text); line-height:1.45; margin-bottom:24px; }
+.panel-fields { display:flex; flex-direction:column; }
+.panel-field { display:flex; padding:12px 0; border-bottom:1px solid var(--border); gap:12px; }
+.panel-field:last-child { border-bottom:none; }
+.field-label { font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--text3); width:110px; flex-shrink:0; padding-top:1px; }
+.field-val { font-size:13px; color:var(--text); flex:1; word-break:break-word; }
+.field-val.mono { font-family:var(--mono); font-size:12px; color:var(--accent); }
+.field-val a { color:var(--work); text-decoration:none; font-family:var(--mono); font-size:11px; }
+.field-val a:hover { text-decoration:underline; }
+.panel-cta { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:13px; margin-top:24px; background:rgba(0,229,160,.08); border:1px solid rgba(0,229,160,.25); border-radius:8px; color:var(--accent); font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.06em; text-decoration:none; text-transform:uppercase; transition:all .2s; }
+.panel-cta:hover { background:rgba(0,229,160,.14); }
+
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+@keyframes fadeRow { from{opacity:0;transform:translateY(3px)} to{opacity:1;transform:none} }
+@media(max-width:900px){ .sidebar{display:none} .stats-bar{grid-template-columns:repeat(2,1fr)} .detail-panel{width:100%} }
+
+/* LOGIN */
+.login-screen { position:fixed; inset:0; z-index:1000; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--bg); }
+.login-screen.hidden { display:none; }
+.login-box { width:380px; background:var(--surface); border:1px solid var(--border2); border-radius:16px; padding:40px 36px; }
+.login-logo { font-family:var(--mono); font-size:13px; font-weight:600; color:var(--accent); letter-spacing:.1em; text-transform:uppercase; display:flex; align-items:center; gap:8px; justify-content:center; margin-bottom:32px; }
+.login-title { font-size:18px; font-weight:500; color:var(--text); text-align:center; margin-bottom:6px; }
+.login-sub { font-size:13px; color:var(--text3); text-align:center; margin-bottom:28px; }
+.login-field { margin-bottom:16px; }
+.login-label { display:block; font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--text3); margin-bottom:6px; }
+.login-input { width:100%; background:var(--bg); border:1px solid var(--border2); border-radius:8px; color:var(--text); font-family:var(--sans); font-size:14px; padding:11px 14px; outline:none; transition:border-color .2s; }
+.login-input::placeholder { color:var(--text3); }
+.login-input:focus { border-color:var(--accent); }
+.login-btn { width:100%; padding:12px; margin-top:8px; background:rgba(0,229,160,.1); border:1px solid rgba(0,229,160,.3); border-radius:8px; color:var(--accent); font-family:var(--mono); font-size:13px; font-weight:600; letter-spacing:.06em; cursor:pointer; transition:all .2s; text-transform:uppercase; }
+.login-btn:hover { background:rgba(0,229,160,.18); border-color:rgba(0,229,160,.5); }
+.login-btn:disabled { opacity:.5; cursor:not-allowed; }
+.login-error { margin-top:14px; font-size:12px; color:var(--danger); font-family:var(--mono); text-align:center; min-height:16px; }
+.user-info { display:flex; align-items:center; gap:10px; margin-left:auto; }
+.user-badge { font-family:var(--mono); font-size:11px; color:var(--accent); background:rgba(0,229,160,.08); border:1px solid rgba(0,229,160,.2); border-radius:5px; padding:4px 10px; }
+.logout-btn { font-family:var(--mono); font-size:11px; color:var(--text3); background:none; border:1px solid var(--border2); border-radius:5px; padding:5px 12px; cursor:pointer; transition:all .15s; }
+.logout-btn:hover { color:var(--danger); border-color:var(--danger); }
+.upload-result { margin-top:20px; padding:16px; border-radius:10px; background:var(--surface2); border:1px solid var(--border2); text-align:left; }
+.upload-result h4 { font-family:var(--mono); font-size:12px; color:var(--accent); margin-bottom:10px; letter-spacing:.05em; }
+.upload-result .stat-row { display:flex; justify-content:space-between; padding:4px 0; font-size:12px; }
+.upload-result .stat-row .label { color:var(--text3); }
+.upload-result .stat-row .val { font-family:var(--mono); color:var(--text); font-weight:500; }
+.upload-result .val.green { color:var(--accent); }
+.upload-result .val.blue { color:var(--work); }
+.upload-result .val.gray { color:var(--text3); }
+.upload-progress { margin-top:14px; font-size:12px; color:var(--text3); font-family:var(--mono); text-align:center; }
+.role-badge { font-family:var(--mono); font-size:9px; padding:2px 6px; border-radius:3px; margin-left:6px; }
+.role-badge.admin { background:rgba(245,166,35,.12); color:var(--compare); border:1px solid rgba(245,166,35,.25); }
+.role-badge.editor { background:rgba(74,158,255,.1); color:var(--work); border:1px solid rgba(74,158,255,.2); }
+.role-badge.viewer { background:rgba(120,130,150,.1); color:var(--text3); border:1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo"><div class="logo-dot"></div>TENDER.GOV.MN</div>
+    <div class="login-title">Нэвтрэх</div>
+    <div class="login-sub">Тендерийн хяналтын самбарт нэвтрэх</div>
+    <div class="login-field">
+      <label class="login-label">Хэрэглэгчийн нэр</label>
+      <input class="login-input" type="text" id="login-username" placeholder="Нэвтрэх нэр" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label class="login-label">Нууц үг</label>
+      <input class="login-input" type="password" id="login-password" placeholder="Нууц үг" autocomplete="current-password">
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Нэвтрэх →</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- UPLOAD SCREEN -->
+<div class="upload-screen hidden" id="upload-screen">
+  <div class="upload-logo"><div class="logo-dot"></div>TENDER.GOV.MN</div>
+  <div class="upload-box" id="upload-box">
+    <div class="upload-icon">📂</div>
+    <div class="upload-title">JSON файл оруулна уу</div>
+    <div class="upload-sub">tender.gov.mn-ээс татсан тендерийн JSON файлыг<br>энд чирж тавих эсвэл доорх товчийг дарна уу</div>
+    <label class="upload-btn" for="file-input">📁 &nbsp;Файл сонгох</label>
+    <input type="file" id="file-input" accept=".json">
+    <div class="upload-progress" id="upload-progress"></div>
+    <div class="upload-error" id="upload-error"></div>
+    <div class="upload-formats">Зөвхөн .json өргөтгөлтэй файл дэмжигдэнэ</div>
+    <div class="upload-result" id="upload-result" style="display:none"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app" id="main-app" style="display:none">
+  <header>
+    <div class="logo"><div class="logo-dot"></div>TENDER.GOV.MN</div>
+    <div class="header-meta" id="header-meta"></div>
+    <button class="header-reset" id="btn-upload-new" onclick="resetApp()" style="display:none">+ Мэдээлэл шинэчлэх</button>
+    <div class="user-info">
+      <span class="user-badge" id="user-badge"></span>
+      <button class="logout-btn" onclick="doLogout()">Гарах</button>
+    </div>
+  </header>
+
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-label">Нийт тендер</div><div class="stat-num" style="color:var(--accent)" id="st-total">—</div><div class="stat-sub">бүртгэлтэй</div></div>
+    <div class="stat-item"><div class="stat-label">Өнөөдөр дуусах</div><div class="stat-num" style="color:var(--danger)" id="st-today">—</div><div class="stat-sub" id="st-date">—</div></div>
+    <div class="stat-item"><div class="stat-label">Нээлттэй тендер</div><div class="stat-num" style="color:var(--work)" id="st-open">—</div><div class="stat-sub">шалгаруулалтын арга</div></div>
+    <div class="stat-item"><div class="stat-label">Байгууллагын тоо</div><div class="stat-num" style="color:var(--compare)" id="st-orgs">—</div><div class="stat-sub">өөр өөр байгууллага</div></div>
+  </div>
+
+  <div class="main">
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">Хайлт</div>
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input class="search-input" type="text" id="search" placeholder="Нэр, байгууллага, дугаар...">
+        </div>
+      </div>
+      <div class="sidebar-section"><div class="sidebar-title">Тендерийн төрөл</div><div class="filter-group" id="type-filters"></div></div>
+      <div class="sidebar-section"><div class="sidebar-title">Шалгаруулалтын арга</div><div class="filter-group" id="method-filters"></div></div>
+      <div class="sidebar-section"><div class="sidebar-title">Хугацаа</div><div class="filter-group" id="deadline-filters"></div></div>
+      <div class="sidebar-section"><div class="sidebar-title">Байгууллага</div><div class="org-list" id="org-list"></div></div>
+    </aside>
+
+    <div class="content">
+      <div class="toolbar">
+        <div class="toolbar-count"><span id="result-count">—</span> тендер</div>
+        <span class="sort-label">Эрэмбэлэх:</span>
+        <select class="sort-select" id="sort-select" onchange="applyFilters()">
+          <option value="deadline_asc">Хугацаа (ойрхоос)</option>
+          <option value="deadline_desc">Хугацаа (хол эхлэн)</option>
+          <option value="name_asc">Нэр (А→Я)</option>
+          <option value="org_asc">Байгууллага</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th style="width:40px">#</th>
+            <th>Дугаар</th><th>Нэр</th><th>Байгууллага</th>
+            <th>Төрөл</th><th>Арга</th><th>Дуусах огноо</th>
+          </tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div class="empty" id="empty-state" style="display:none">
+          <div class="empty-icon">◎</div>
+          <h3>Тендер олдсонгүй</h3>
+          <p>Шүүлт эсвэл хайлтын нөхцөлийг өөрчилнө үү</p>
+        </div>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="detail-panel" id="detail-panel">
+  <button class="panel-close" onclick="closePanel()">✕</button>
+  <div id="panel-content"></div>
+</div>
+
+<script>
+// ── AUTH ──
+let currentUser = null;
+
+async function checkAuth() {
+  try {
+    const r = await fetch('/api/me');
+    if (r.ok) {
+      const data = await r.json();
+      if (data.logged_in) {
+        currentUser = data.user;
+        showApp();
+        return;
+      }
+    }
+  } catch(e) {}
+  showLogin();
+}
+
+function showLogin() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('upload-screen').classList.add('hidden');
+  document.getElementById('main-app').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  const badge = document.getElementById('user-badge');
+  badge.innerHTML = currentUser.full_name + `<span class="role-badge ${currentUser.role}">${currentUser.role}</span>`;
+
+  // Серверээс өгөгдөл татах
+  loadFromServer();
+}
+
+async function doLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  errEl.textContent = '';
+
+  if (!username || !password) { errEl.textContent = 'Нэр, нууц үг оруулна уу'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Нэвтэрч байна...';
+  try {
+    const r = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await r.json();
+    if (r.ok && data.success) {
+      currentUser = data.user;
+      showApp();
+    } else {
+      errEl.textContent = data.error || 'Нэвтрэх амжилтгүй';
+    }
+  } catch(e) {
+    errEl.textContent = 'Сервертэй холбогдож чадсангүй';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Нэвтрэх →';
+}
+
+async function doLogout() {
+  await fetch('/api/logout', { method: 'POST' });
+  currentUser = null;
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('upload-screen').classList.add('hidden');
+  showLogin();
+}
+
+// Enter дарахад login хийх
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('login-password').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+  document.getElementById('login-username').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('login-password').focus(); });
+  checkAuth();
+});
+
+const COLORS = ['#00e5a0','#4a9eff','#f5a623','#a78bfa','#ff5f6e','#34d399','#f472b6','#60a5fa','#fb923c','#a3e635','#38bdf8','#e879f9','#4ade80','#facc15','#c084fc','#22d3ee'];
+let DATA = [], orgColor = {}, TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+let S = { search:'', type:'all', method:'all', deadline:'all', org:null, page:1, perPage:25, filtered:[] };
+
+// ── UPLOAD ──
+const box = document.getElementById('upload-box');
+const fi  = document.getElementById('file-input');
+const err = document.getElementById('upload-error');
+
+box.addEventListener('dragover', e => { e.preventDefault(); box.classList.add('drag-over'); });
+box.addEventListener('dragleave', () => box.classList.remove('drag-over'));
+box.addEventListener('drop', e => { e.preventDefault(); box.classList.remove('drag-over'); if(e.dataTransfer.files[0]) load(e.dataTransfer.files[0]); });
+fi.addEventListener('change', e => { if(e.target.files[0]) load(e.target.files[0]); });
+
+async function loadFromServer() {
+  try {
+    const r = await fetch('/api/tenders');
+    if (!r.ok) return;
+    const data = await r.json();
+    if (data.tenders && data.tenders.length > 0) {
+      init(data.tenders, `Сервер (${data.total} тендер)`);
+    } else {
+      // Өгөгдөл байхгүй — upload хуудас харуулах
+      if (currentUser.role === 'admin' || currentUser.role === 'editor') {
+        document.getElementById('upload-screen').classList.remove('hidden');
+      } else {
+        document.getElementById('upload-screen').classList.remove('hidden');
+        document.getElementById('upload-box').innerHTML = `
+          <div class="upload-icon">🔒</div>
+          <div class="upload-title">Мэдээлэл байхгүй</div>
+          <div class="upload-sub">Одоогоор тендерийн мэдээлэл оруулаагүй байна.<br>editor эрхтэй хэрэглэгчээс мэдээлэл оруулахыг хүснэ үү.</div>`;
+      }
+    }
+  } catch(e) {
+    document.getElementById('upload-screen').classList.remove('hidden');
+  }
+}
+
+function load(file) {
+  err.textContent = '';
+  const progress = document.getElementById('upload-progress');
+  const resultEl = document.getElementById('upload-result');
+  resultEl.style.display = 'none';
+
+  if (currentUser.role !== 'admin' && currentUser.role !== 'editor') {
+    err.textContent = '⚠ Мэдээлэл оруулах эрхгүй байна';
+    return;
+  }
+  if (!file.name.toLowerCase().endsWith('.json')) { err.textContent = '⚠ Зөвхөн .json файл дэмжигдэнэ'; return; }
+
+  const r = new FileReader();
+  r.onload = async e => {
+    try {
+      const d = JSON.parse(e.target.result);
+      if (!Array.isArray(d) || !d.length) throw new Error('Хоосон эсвэл буруу формат');
+      if (!d[0].tender_no && !d[0].name) throw new Error('Тендерийн мэдээлэл олдсонгүй');
+
+      // Серверт илгээх
+      progress.textContent = `${d.length} тендер илгээж байна...`;
+      const resp = await fetch('/api/tenders/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenders: d, filename: file.name })
+      });
+      const result = await resp.json();
+      progress.textContent = '';
+
+      if (!resp.ok) {
+        err.textContent = '⚠ ' + (result.error || 'Серверийн алдаа');
+        return;
+      }
+
+      // Үр дүн харуулах
+      const s = result.summary;
+      resultEl.innerHTML = `
+        <h4>✓ АМЖИЛТТАЙ</h4>
+        <div class="stat-row"><span class="label">Файл дахь нийт</span><span class="val">${s.total_in_file}</span></div>
+        <div class="stat-row"><span class="label">Шинээр нэмсэн</span><span class="val green">+${s.inserted}</span></div>
+        <div class="stat-row"><span class="label">Шинэчлэгдсэн</span><span class="val blue">${s.updated}</span></div>
+        <div class="stat-row"><span class="label">Өөрчлөлтгүй</span><span class="val gray">${s.unchanged}</span></div>`;
+      resultEl.style.display = 'block';
+
+      // Серверээс шинэ өгөгдөл татаж dashboard харуулах
+      setTimeout(() => loadFromServer(), 1500);
+    } catch(ex) { progress.textContent = ''; err.textContent = '⚠ Алдаа: ' + ex.message; }
+  };
+  r.readAsText(file, 'UTF-8');
+}
+
+function init(data, fname) {
+  DATA = data;
+  const ds = DATA.map(d => new Date(d.deadline)).filter(d => !isNaN(d)).sort((a,b)=>a-b);
+  if (ds.length) { TODAY = new Date(ds[0]); TODAY.setHours(0,0,0,0); }
+
+  const orgs = [...new Set(DATA.map(d=>d.organization))];
+  orgs.forEach((o,i) => orgColor[o] = COLORS[i % COLORS.length]);
+
+  // editor/admin бол upload товч харуулах
+  const uploadBtn = document.getElementById('btn-upload-new');
+  if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'editor')) {
+    uploadBtn.style.display = '';
+  } else {
+    uploadBtn.style.display = 'none';
+  }
+
+  document.getElementById('st-total').textContent = DATA.length;
+  document.getElementById('st-today').textContent = DATA.filter(r=>isToday(r.deadline)).length;
+  document.getElementById('st-date').textContent = TODAY.toLocaleDateString('mn-MN');
+  document.getElementById('st-open').textContent = DATA.filter(r=>r.method&&r.method.includes('Нээлттэй')).length;
+  document.getElementById('st-orgs').textContent = orgs.length;
+  document.getElementById('header-meta').textContent = fname + ' · ' + DATA.length + ' тендер';
+
+  buildSidebar(orgs);
+  document.getElementById('upload-screen').classList.add('hidden');
+  document.getElementById('main-app').style.display = 'flex';
+  S = { search:'', type:'all', method:'all', deadline:'all', org:null, page:1, perPage:25, filtered:[] };
+  applyFilters();
+}
+
+function resetApp() {
+  document.getElementById('upload-screen').classList.remove('hidden');
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('upload-result').style.display = 'none';
+  document.getElementById('upload-progress').textContent = '';
+  fi.value = ''; err.textContent = ''; DATA = []; orgColor = {};
+}
+
+// ── UTILS ──
+function isToday(d) { const dt=new Date(d); dt.setHours(0,0,0,0); return dt.getTime()===TODAY.getTime(); }
+function isWithin(d,n) { const dt=new Date(d),lim=new Date(TODAY); lim.setDate(lim.getDate()+n); return dt<=lim; }
+function fmt(s) { const d=new Date(s); return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`; }
+function dlCls(s) { return isToday(s)?'deadline-today':isWithin(s,3)?'deadline-soon':'deadline-ok'; }
+function tBadge(t) {
+  if(t==='Ажил') return`<span class="badge badge-work">АЖИЛ</span>`;
+  if(t==='Бараа') return`<span class="badge badge-goods">БАРАА</span>`;
+  return t?`<span class="badge badge-other">${t.toUpperCase()}</span>`:'';
+}
+function mBadge(m) {
+  return m&&m.includes('Нээлттэй')?`<span class="badge badge-open">НЭЭЛТТЭЙ</span>`:`<span class="badge badge-compare">ХАРЬЦУУЛАЛТ</span>`;
+}
+
+// ── SIDEBAR ──
+function buildSidebar(orgs) {
+  // Types
+  const types = ['all',...[...new Set(DATA.map(d=>d.type).filter(Boolean))]];
+  document.getElementById('type-filters').innerHTML = types.map(t => {
+    const c = t==='all'?DATA.length:DATA.filter(r=>r.type===t).length;
+    const l = t==='all'?'Бүгд':t;
+    return `<button class="filter-btn${t==='all'?' active':''}" onclick="setF('type',this,'${t}','type-filters')">${l}<span class="count">${c}</span></button>`;
+  }).join('');
+
+  // Methods
+  const openC = DATA.filter(r=>r.method&&r.method.includes('Нээлттэй')).length;
+  const compC = DATA.length - openC;
+  document.getElementById('method-filters').innerHTML = `
+    <button class="filter-btn active" onclick="setF('method',this,'all','method-filters')">Бүгд<span class="count">${DATA.length}</span></button>
+    <button class="filter-btn" onclick="setF('method',this,'Нээлттэй','method-filters')">Нээлттэй тендер<span class="count">${openC}</span></button>
+    <button class="filter-btn" onclick="setF('method',this,'Харьцуулалтын','method-filters')">Харьцуулалтын арга<span class="count">${compC}</span></button>`;
+
+  // Deadline
+  document.getElementById('deadline-filters').innerHTML = `
+    <button class="filter-btn active" onclick="setF('deadline',this,'all','deadline-filters')">Бүх хугацаа<span class="count">${DATA.length}</span></button>
+    <button class="filter-btn" onclick="setF('deadline',this,'today','deadline-filters')">Өнөөдөр дуусах<span class="count">${DATA.filter(r=>isToday(r.deadline)).length}</span></button>
+    <button class="filter-btn" onclick="setF('deadline',this,'week','deadline-filters')">7 хоногт дуусах<span class="count">${DATA.filter(r=>isWithin(r.deadline,7)).length}</span></button>
+    <button class="filter-btn" onclick="setF('deadline',this,'month','deadline-filters')">Сар дотор<span class="count">${DATA.filter(r=>isWithin(r.deadline,30)).length}</span></button>`;
+
+  // Orgs
+  document.getElementById('org-list').innerHTML = orgs.sort().map(o => {
+    const c = DATA.filter(r=>r.organization===o).length;
+    const safe = o.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return `<button class="org-btn" onclick="setOrg(this,'${safe}')">
+      <span class="org-dot" style="background:${orgColor[o]}"></span>
+      <span class="org-name">${o}</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:auto;flex-shrink:0">${c}</span>
+    </button>`;
+  }).join('');
+}
+
+// ── FILTER LOGIC ──
+function setF(key, btn, val, groupId) {
+  document.querySelectorAll(`#${groupId} .filter-btn`).forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); S[key]=val; applyFilters();
+}
+function setOrg(btn, val) {
+  if(S.org===val){ S.org=null; document.querySelectorAll('.org-btn').forEach(b=>b.classList.remove('active')); }
+  else { S.org=val; document.querySelectorAll('.org-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  applyFilters();
+}
+
+function applyFilters() {
+  const q = S.search.toLowerCase();
+  let d = DATA.filter(r => {
+    if(q && !r.name?.toLowerCase().includes(q) && !r.organization?.toLowerCase().includes(q) && !r.tender_no?.toLowerCase().includes(q)) return false;
+    if(S.type!=='all' && r.type!==S.type) return false;
+    if(S.method==='Нээлттэй' && !(r.method&&r.method.includes('Нээлттэй'))) return false;
+    if(S.method==='Харьцуулалтын' && r.method&&r.method.includes('Нээлттэй')) return false;
+    if(S.org && r.organization!==S.org) return false;
+    if(S.deadline==='today' && !isToday(r.deadline)) return false;
+    if(S.deadline==='week' && !isWithin(r.deadline,7)) return false;
+    if(S.deadline==='month' && !isWithin(r.deadline,30)) return false;
+    return true;
+  });
+  const sort = document.getElementById('sort-select').value;
+  if(sort==='deadline_asc') d.sort((a,b)=>new Date(a.deadline)-new Date(b.deadline));
+  else if(sort==='deadline_desc') d.sort((a,b)=>new Date(b.deadline)-new Date(a.deadline));
+  else if(sort==='name_asc') d.sort((a,b)=>(a.name||'').localeCompare(b.name||'','mn'));
+  else if(sort==='org_asc') d.sort((a,b)=>(a.organization||'').localeCompare(b.organization||'','mn'));
+  S.filtered=d; S.page=1; render();
+}
+
+function render() {
+  const {filtered,page,perPage}=S;
+  const maxP=Math.max(1,Math.ceil(filtered.length/perPage));
+  const start=(page-1)*perPage;
+  const slice=filtered.slice(start,start+perPage);
+  document.getElementById('result-count').textContent=filtered.length;
+  const tbody=document.getElementById('tbody');
+  if(!slice.length){
+    tbody.innerHTML=''; document.getElementById('empty-state').style.display='block';
+  } else {
+    document.getElementById('empty-state').style.display='none';
+    tbody.innerHTML=slice.map((r,i)=>{
+      const idx=DATA.indexOf(r), c=orgColor[r.organization]||'#888';
+      return `<tr onclick="openPanel(${idx})">
+        <td class="td-num">${start+i+1}</td>
+        <td class="td-code"><a href="${r.link||'#'}" target="_blank" onclick="event.stopPropagation()">${r.tender_no||'—'}</a></td>
+        <td class="td-name">${r.name||'—'}</td>
+        <td class="td-org" title="${r.organization||''}"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:${c};flex-shrink:0"></span>${r.organization||'—'}</span></td>
+        <td>${tBadge(r.type)}</td>
+        <td>${mBadge(r.method)}</td>
+        <td class="td-deadline ${dlCls(r.deadline)}">${fmt(r.deadline)}</td>
+      </tr>`;
+    }).join('');
+  }
+  const pages=[]; for(let p=Math.max(1,page-2);p<=Math.min(maxP,page+2);p++) pages.push(p);
+  document.getElementById('pagination').innerHTML=`
+    <div class="page-info">Нийт <b>${filtered.length}</b> тендер &nbsp;·&nbsp; <b>${maxP}</b> хуудас</div>
+    <div class="page-btns">
+      <button class="page-btn" onclick="pg(1)" ${page<=1?'disabled':''}>«</button>
+      <button class="page-btn" onclick="pg(${page-1})" ${page<=1?'disabled':''}>‹</button>
+      ${pages.map(p=>`<button class="page-btn${p===page?' current':''}" onclick="pg(${p})">${p}</button>`).join('')}
+      <button class="page-btn" onclick="pg(${page+1})" ${page>=maxP?'disabled':''}>›</button>
+      <button class="page-btn" onclick="pg(${maxP})" ${page>=maxP?'disabled':''}>»</button>
+    </div>`;
+}
+
+function pg(p){ const m=Math.ceil(S.filtered.length/S.perPage); S.page=Math.max(1,Math.min(p,m)); render(); }
+
+function openPanel(idx){
+  const r=DATA[idx]; if(!r) return;
+  const c=orgColor[r.organization]||'#888', dc=dlCls(r.deadline);
+  document.getElementById('panel-content').innerHTML=`
+    <div class="panel-badge">${tBadge(r.type)} ${mBadge(r.method)}</div>
+    <div class="panel-title">${r.name||'—'}</div>
+    <div class="panel-fields">
+      <div class="panel-field"><div class="field-label">Дугаар</div><div class="field-val mono">${r.tender_no||'—'}</div></div>
+      <div class="panel-field"><div class="field-label">Байгууллага</div><div class="field-val" style="color:${c}">${r.organization||'—'}</div></div>
+      <div class="panel-field"><div class="field-label">Дуусах огноо</div><div class="field-val ${dc}">${new Date(r.deadline).toLocaleString('mn-MN')}</div></div>
+      <div class="panel-field"><div class="field-label">Арга</div><div class="field-val">${r.method||'—'}</div></div>
+      <div class="panel-field"><div class="field-label">Цахим</div><div class="field-val">${r.electronic||'—'}</div></div>
+      ${r.link?`<div class="panel-field"><div class="field-label">Холбоос</div><div class="field-val"><a href="${r.link}" target="_blank">tender.gov.mn ↗</a></div></div>`:''}
+    </div>
+    ${r.link?`<a class="panel-cta" href="${r.link}" target="_blank">ТЕНДЕРТ ОРОЛЦОХ →</a>`:''}`;
+  document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+function closePanel(){ document.getElementById('detail-panel').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+document.getElementById('search').addEventListener('input', e=>{ S.search=e.target.value; applyFilters(); });
+</script>
+</body>
+</html>
