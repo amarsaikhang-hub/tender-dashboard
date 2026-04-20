@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Хянах самбар — tender.gov.mn</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f0f6ff;--surface:#fff;--surface2:#f7f9fc;--border:#e2e8f0;--border2:#cbd5e1;--accent:#0ea5e9;--accent2:#0284c7;--accent-bg:rgba(14,165,233,.08);--text:#0f172a;--text2:#475569;--text3:#94a3b8;--work:#3b82f6;--work-bg:rgba(59,130,246,.08);--goods:#10b981;--goods-bg:rgba(16,185,129,.08);--compare:#f59e0b;--compare-bg:rgba(245,158,11,.08);--open:#8b5cf6;--open-bg:rgba(139,92,246,.08);--danger:#ef4444;--shadow:0 1px 3px rgba(0,0,0,.06);--shadow-md:0 4px 6px rgba(0,0,0,.05);--shadow-lg:0 10px 25px rgba(0,0,0,.07);--mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh}
+.app{display:flex;flex-direction:column;min-height:100vh}
+header{border-bottom:1px solid var(--border);padding:0 32px;height:64px;display:flex;align-items:center;gap:24px;position:sticky;top:0;background:rgba(255,255,255,.85);backdrop-filter:blur(16px) saturate(180%);z-index:100}
+.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent2);letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:8px;text-decoration:none}
+.logo-dot{width:10px;height:10px;background:linear-gradient(135deg,var(--accent),#06b6d4);border-radius:50%}
+.header-nav{display:flex;gap:4px;margin-left:16px}
+.nav-link{font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;text-decoration:none;color:var(--text3);transition:all .15s}
+.nav-link:hover{background:var(--surface2);color:var(--text)}
+.nav-link.active{background:var(--accent-bg);color:var(--accent2);font-weight:600}
+.user-info{display:flex;align-items:center;gap:10px;margin-left:auto}
+.user-badge{font-size:12px;font-weight:500;color:var(--accent2);background:var(--accent-bg);border:1px solid rgba(14,165,233,.15);border-radius:8px;padding:5px 12px}
+.logout-btn{font-size:12px;color:var(--text3);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 14px;cursor:pointer}
+.logout-btn:hover{color:var(--danger);border-color:var(--danger)}
+.role-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;margin-left:6px}
+.role-badge.admin{background:rgba(245,158,11,.1);color:#d97706}
+.role-badge.editor{background:var(--work-bg);color:var(--work)}
+
+.content{flex:1;padding:28px 32px;max-width:1200px;margin:0 auto;width:100%}
+.page-title{font-size:24px;font-weight:700;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--text3);margin-bottom:24px}
+
+/* Cards */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;transition:all .2s;cursor:pointer;text-decoration:none;color:inherit}
+.stat-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.sc-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:12px}
+.sc-num{font-family:var(--mono);font-size:28px;font-weight:700;line-height:1}
+.sc-label{font-size:12px;color:var(--text3);margin-top:4px}
+.sc-sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* Sections */
+.section{margin-bottom:28px}
+.section-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:var(--shadow)}
+.card-title{font-size:13px;font-weight:600;margin-bottom:14px;color:var(--text2)}
+
+/* Bar chart */
+.bar-list{display:flex;flex-direction:column;gap:8px}
+.bar-item{display:flex;align-items:center;gap:10px}
+.bar-rank{font-family:var(--mono);font-size:11px;color:var(--text3);width:18px;text-align:right}
+.bar-name{font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{width:120px;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;flex-shrink:0}
+.bar-fill{height:100%;border-radius:4px}
+.bar-val{font-family:var(--mono);font-size:11px;font-weight:600;width:30px;text-align:right}
+
+/* Win rate */
+.win-ring{width:100px;height:100px;margin:0 auto 12px}
+.win-center{font-family:var(--mono);font-size:28px;font-weight:700;text-align:center}
+.win-label{text-align:center;font-size:12px;color:var(--text3)}
+
+/* Type pills */
+.type-grid{display:flex;gap:8px;flex-wrap:wrap}
+.type-pill{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;background:var(--surface2);border:1px solid var(--border)}
+.type-pill-name{font-size:12px;font-weight:500}
+.type-pill-num{font-family:var(--mono);font-size:14px;font-weight:700}
+
+/* Recent */
+.recent-list{display:flex;flex-direction:column;gap:6px}
+.recent-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);font-size:12px}
+.recent-name{flex:1;font-weight:500}
+.recent-org{color:var(--text3);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recent-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px}
+
+.login-screen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#e0f2fe 0%,#f0f6ff 50%,#ede9fe 100%)}
+.login-screen.hidden{display:none}
+.login-box{width:420px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:44px 40px;box-shadow:var(--shadow-lg);text-align:center}
+.login-msg{font-size:14px;color:var(--text2)}.login-msg a{color:var(--accent2);font-weight:600}
+
+@media(max-width:900px){.stat-grid{grid-template-columns:repeat(2,1fr)}.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent2);display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:24px"><div class="logo-dot"></div>TENDER.GOV.MN</div>
+    <div style="font-size:18px;font-weight:600;text-align:center;margin-bottom:6px">Нэвтрэх</div>
+    <div style="font-size:13px;color:var(--text3);text-align:center;margin-bottom:24px">Тендерийн хяналтын самбарт нэвтрэх</div>
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:5px">Хэрэглэгчийн нэр</label>
+      <input style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;padding:12px 16px;outline:none" type="text" id="login-user" placeholder="Нэвтрэх нэр">
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:5px">Нууц үг</label>
+      <input style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;padding:12px 16px;outline:none" type="password" id="login-pass" placeholder="Нууц үг">
+    </div>
+    <button style="width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer" onclick="doLogin()">Нэвтрэх</button>
+    <div style="margin-top:12px;font-size:12px;color:var(--danger);text-align:center;min-height:16px" id="login-error"></div>
+  </div>
+</div>
+
+<div class="app" id="main-app" style="display:none">
+  <header>
+    <a class="logo" href="/"><div class="logo-dot"></div>TENDER.GOV.MN</a>
+    <nav class="header-nav">
+      <a class="nav-link active" href="/">Хянах самбар</a>
+      <a class="nav-link" href="/tenders">Тендер</a>
+      <a class="nav-link" href="/procurement">Худалдан авалт</a>
+      <a class="nav-link" href="/joined">Оролцсон</a>
+      <a class="nav-link" href="/suggested">Санал болгох</a>
+    </nav>
+    <div class="user-info">
+      <span class="user-badge" id="user-badge"></span>
+      <button class="logout-btn" onclick="doLogout()">Гарах</button>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="page-title">Хянах самбар</div>
+    <div class="page-sub">Тендерийн ерөнхий мэдээлэл, статистик, дүн шинжилгээ</div>
+
+    <!-- Stat Cards -->
+    <div class="stat-grid">
+      <a class="stat-card" href="/tenders">
+        <div class="sc-icon" style="background:var(--accent-bg)">📋</div>
+        <div class="sc-num" style="color:var(--accent)" id="s-tenders">—</div>
+        <div class="sc-label">Нийт тендер</div>
+        <div class="sc-sub" id="s-tenders-sub"></div>
+      </a>
+      <a class="stat-card" href="/joined">
+        <div class="sc-icon" style="background:var(--open-bg)">🎯</div>
+        <div class="sc-num" style="color:var(--open)" id="s-joined">—</div>
+        <div class="sc-label">Оролцсон тендер</div>
+        <div class="sc-sub" id="s-joined-sub"></div>
+      </a>
+      <a class="stat-card" href="/joined">
+        <div class="sc-icon" style="background:var(--goods-bg)">🏆</div>
+        <div class="sc-num" style="color:var(--goods)" id="s-won">—</div>
+        <div class="sc-label">Шалгарсан</div>
+        <div class="sc-sub" id="s-won-sub"></div>
+      </a>
+      <a class="stat-card" href="/procurement">
+        <div class="sc-icon" style="background:var(--compare-bg)">📊</div>
+        <div class="sc-num" style="color:var(--compare)" id="s-plans">—</div>
+        <div class="sc-label">Худалдан авалт</div>
+        <div class="sc-sub" id="s-plans-sub"></div>
+      </a>
+    </div>
+
+    <div class="row">
+      <!-- Ялалтын хувь -->
+      <div class="card">
+        <div class="card-title">Ялалтын хувь</div>
+        <div class="win-center" id="win-rate">—%</div>
+        <div class="win-label">Үр дүн гарсан тендерүүдээс шалгарсан хувь</div>
+      </div>
+
+      <!-- Төрлөөр -->
+      <div class="card">
+        <div class="card-title">Оролцсон тендерийн төрөл</div>
+        <div class="type-grid" id="joined-types"></div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Топ шалгарсан байгууллага -->
+      <div class="card">
+        <div class="card-title">Хамгийн олон шалгарсан байгууллага (Топ 5)</div>
+        <div class="bar-list" id="top-won"></div>
+      </div>
+
+      <!-- Топ оролцсон байгууллага -->
+      <div class="card">
+        <div class="card-title">Хамгийн олон оролцсон байгууллага (Топ 5)</div>
+        <div class="bar-list" id="top-joined"></div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Тендер зарласан байгууллагууд -->
+      <div class="card">
+        <div class="card-title">Тендер зарласан байгууллага (Топ 10)</div>
+        <div class="bar-list" id="top-tender-orgs"></div>
+      </div>
+
+      <!-- Тендер салбар -->
+      <div class="card">
+        <div class="card-title">Тендерийн төрөл (зарлагдсан)</div>
+        <div class="type-grid" id="tender-types"></div>
+      </div>
+    </div>
+
+    <!-- Сүүлийн оролцсон -->
+    <div class="section">
+      <div class="section-title">Сүүлд оролцсон тендерүүд</div>
+      <div class="recent-list" id="recent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+
+async function checkAuth() {
+  try {
+    const r = await fetch('/api/me');
+    if (r.ok) { const d = await r.json(); if (d.logged_in) { currentUser=d.user; showApp(); return; } }
+  } catch(e) {}
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+
+function showApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('main-app').style.display='flex';
+  document.getElementById('user-badge').innerHTML=currentUser.full_name+`<span class="role-badge ${currentUser.role}">${currentUser.role}</span>`;
+  loadDashboard();
+}
+
+async function doLogin() {
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value.trim();
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  if (!username || !password) { errEl.textContent = 'Нэр, нууц үг оруулна уу'; return; }
+  try {
+    const r = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username,password}) });
+    const d = await r.json();
+    if (r.ok && d.success) { currentUser = d.user; showApp(); }
+    else { errEl.textContent = d.error || 'Нэвтрэх амжилтгүй'; }
+  } catch(e) { errEl.textContent = 'Сервертэй холбогдож чадсангүй'; }
+}
+async function doLogout(){await fetch('/api/logout',{method:'POST'});window.location.reload();}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+
+async function loadDashboard() {
+  try {
+    const r = await fetch('/api/dashboard');
+    if (!r.ok) return;
+    const d = await r.json();
+
+    // Stat cards
+    document.getElementById('s-tenders').textContent = d.tenders.total;
+    document.getElementById('s-tenders-sub').textContent = `${d.tenders.active} идэвхтэй / ${d.tenders.orgs} байгууллага`;
+    document.getElementById('s-joined').textContent = d.joined.total;
+    document.getElementById('s-joined-sub').textContent = `${d.joined.orgs} байгууллагад`;
+    document.getElementById('s-won').textContent = d.won.total;
+    document.getElementById('s-won-sub').textContent = `Ялалтын хувь: ${d.won.win_rate}%`;
+    document.getElementById('s-plans').textContent = d.procurement.total;
+    const budget = d.procurement.budget ? (d.procurement.budget / 1000000).toLocaleString('mn-MN',{maximumFractionDigits:0}) : '0';
+    document.getElementById('s-plans-sub').textContent = `${budget} сая ₮ / ${d.procurement.orgs} байгууллага`;
+
+    // Win rate
+    document.getElementById('win-rate').textContent = d.won.win_rate + '%';
+    document.getElementById('win-rate').style.color = d.won.win_rate >= 50 ? 'var(--goods)' : d.won.win_rate >= 25 ? 'var(--compare)' : 'var(--danger)';
+
+    // Joined types
+    const jt = d.joined_types || [];
+    const colors = {'Бараа':'var(--goods)','Ажил':'var(--work)','Үйлчилгээ':'var(--open)'};
+    document.getElementById('joined-types').innerHTML = jt.map(t =>
+      `<div class="type-pill"><span class="type-pill-num" style="color:${colors[t.tender_type]||'var(--text2)'}">${t.cnt}</span><span class="type-pill-name">${esc(t.tender_type)}</span></div>`
+    ).join('');
+
+    // Bar charts
+    renderBars('top-won', d.top_won_orgs, 'var(--goods)');
+    renderBars('top-joined', d.top_joined_orgs, 'var(--open)');
+    renderBars('top-tender-orgs', d.top_tender_orgs, 'var(--accent)');
+
+    // Tender types
+    document.getElementById('tender-types').innerHTML = (d.type_stats||[]).map(t =>
+      `<div class="type-pill"><span class="type-pill-num" style="color:${colors[t.type]||'var(--text2)'}">${t.cnt}</span><span class="type-pill-name">${esc(t.type||'Бусад')}</span></div>`
+    ).join('');
+
+    // Recent
+    document.getElementById('recent').innerHTML = (d.recent_joined||[]).map(r => {
+      const stCls = r.status==='Үр дүн гарсан'?'background:var(--goods-bg);color:var(--goods)':'background:var(--compare-bg);color:var(--compare)';
+      return `<div class="recent-item">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--accent2)">${esc(r.tender_no||'')}</span>
+        <span class="recent-name">${esc(r.name||'')}</span>
+        <span class="recent-org">${esc(r.organization||'')}</span>
+        <span class="recent-status" style="${stCls}">${esc(r.status||'')}</span>
+      </div>`;
+    }).join('');
+
+  } catch(e) { console.error(e); }
+}
+
+function renderBars(id, data, color) {
+  const el = document.getElementById(id);
+  if (!data || !data.length) { el.innerHTML = '<div style="color:var(--text3);font-size:12px">Мэдээлэл байхгүй</div>'; return; }
+  const max = data[0].cnt;
+  el.innerHTML = data.map((d,i) =>
+    `<div class="bar-item">
+      <span class="bar-rank">${i+1}</span>
+      <span class="bar-name">${esc(d.organization||d.name||'')}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${(d.cnt/max)*100}%;background:${color}"></div></div>
+      <span class="bar-val">${d.cnt}</span>
+    </div>`
+  ).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  checkAuth();
+  document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+  document.getElementById('login-user').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('login-pass').focus(); });
+});
+</script>
+</body>
+</html>

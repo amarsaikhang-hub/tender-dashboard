@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админ панель — Тендер</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0c10; --surface: #111318; --surface2: #181c24;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+  --accent: #00e5a0; --text: #e8ecf0; --text2: #7a8494; --text3: #4a5260;
+  --work: #4a9eff; --danger: #ff5f6e; --compare: #f5a623; --open: #a78bfa;
+  --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(0,229,160,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,0.015) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+
+.app { position:relative; z-index:1; display:flex; flex-direction:column; min-height:100vh; }
+header { border-bottom:1px solid var(--border); padding:0 32px; height:60px; display:flex; align-items:center; gap:16px; position:sticky; top:0; background:rgba(10,12,16,.92); backdrop-filter:blur(12px); z-index:100; }
+.logo { font-family:var(--mono); font-size:13px; font-weight:600; color:var(--accent); letter-spacing:.08em; text-transform:uppercase; display:flex; align-items:center; gap:8px; }
+.logo-dot { width:8px; height:8px; background:var(--accent); border-radius:50%; }
+.nav-links { display:flex; gap:4px; margin-left:20px; }
+.nav-link { font-family:var(--mono); font-size:11px; color:var(--text3); background:none; border:1px solid transparent; border-radius:5px; padding:6px 14px; cursor:pointer; transition:all .15s; text-decoration:none; letter-spacing:.03em; }
+.nav-link:hover { color:var(--text); border-color:var(--border2); }
+.nav-link.active { color:var(--accent); background:rgba(0,229,160,.08); border-color:rgba(0,229,160,.2); }
+.header-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+.user-badge { font-family:var(--mono); font-size:11px; color:var(--accent); background:rgba(0,229,160,.08); border:1px solid rgba(0,229,160,.2); border-radius:5px; padding:4px 10px; }
+
+.main { flex:1; padding:28px 32px; max-width:1100px; width:100%; margin:0 auto; }
+
+/* TABS */
+.tabs { display:flex; gap:4px; margin-bottom:24px; }
+.tab { font-family:var(--mono); font-size:12px; color:var(--text3); background:none; border:1px solid var(--border2); border-radius:6px; padding:9px 20px; cursor:pointer; transition:all .15s; letter-spacing:.04em; }
+.tab:hover { color:var(--text); background:var(--surface); }
+.tab.active { color:var(--accent); background:rgba(0,229,160,.08); border-color:rgba(0,229,160,.25); }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* CARD */
+.card { background:var(--surface); border:1px solid var(--border2); border-radius:12px; overflow:hidden; }
+.card-header { padding:18px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; }
+.card-title { font-family:var(--mono); font-size:13px; font-weight:600; color:var(--text); letter-spacing:.04em; }
+.card-count { font-family:var(--mono); font-size:11px; color:var(--text3); background:var(--bg); padding:2px 8px; border-radius:10px; }
+
+/* TABLE */
+table { width:100%; border-collapse:collapse; }
+thead tr { border-bottom:1px solid var(--border2); }
+th { font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--text3); padding:12px 16px; text-align:left; }
+tbody tr { border-bottom:1px solid var(--border); transition:background .1s; }
+tbody tr:hover { background:var(--surface2); }
+td { padding:11px 16px; font-size:13px; }
+.td-mono { font-family:var(--mono); font-size:12px; }
+
+/* BADGES */
+.role-badge { font-family:var(--mono); font-size:10px; font-weight:600; padding:3px 8px; border-radius:4px; letter-spacing:.04em; }
+.role-admin { background:rgba(245,166,35,.12); color:var(--compare); border:1px solid rgba(245,166,35,.25); }
+.role-editor { background:rgba(74,158,255,.1); color:var(--work); border:1px solid rgba(74,158,255,.2); }
+.role-viewer { background:rgba(120,130,150,.1); color:var(--text3); border:1px solid var(--border); }
+.action-badge { font-family:var(--mono); font-size:10px; font-weight:600; padding:3px 8px; border-radius:4px; }
+.act-login { background:rgba(0,229,160,.08); color:var(--accent); }
+.act-login_failed { background:rgba(255,95,110,.1); color:var(--danger); }
+.act-logout { background:rgba(120,130,150,.1); color:var(--text3); }
+.act-upload { background:rgba(74,158,255,.1); color:var(--work); }
+.act-user_created { background:rgba(167,139,250,.1); color:var(--open); }
+.act-user_deleted { background:rgba(255,95,110,.1); color:var(--danger); }
+
+/* BUTTONS */
+.btn { font-family:var(--mono); font-size:11px; font-weight:600; padding:7px 16px; border-radius:6px; cursor:pointer; transition:all .15s; letter-spacing:.04em; border:1px solid; }
+.btn-primary { background:rgba(0,229,160,.1); border-color:rgba(0,229,160,.3); color:var(--accent); }
+.btn-primary:hover { background:rgba(0,229,160,.18); }
+.btn-danger { background:rgba(255,95,110,.08); border-color:rgba(255,95,110,.25); color:var(--danger); }
+.btn-danger:hover { background:rgba(255,95,110,.16); }
+.btn-small { padding:4px 10px; font-size:10px; }
+
+/* FORM */
+.form-row { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+.form-group { display:flex; flex-direction:column; gap:5px; flex:1; min-width:160px; }
+.form-label { font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--text3); }
+.form-input, .form-select { background:var(--bg); border:1px solid var(--border2); border-radius:6px; color:var(--text); font-family:var(--sans); font-size:13px; padding:9px 12px; outline:none; transition:border-color .2s; }
+.form-input:focus, .form-select:focus { border-color:var(--accent); }
+.form-input::placeholder { color:var(--text3); }
+.add-user-form { padding:20px 22px; border-bottom:1px solid var(--border); background:var(--surface2); }
+.form-msg { font-family:var(--mono); font-size:11px; margin-top:8px; min-height:16px; }
+.form-msg.ok { color:var(--accent); }
+.form-msg.err { color:var(--danger); }
+
+/* LOG FILTERS */
+.log-filters { padding:14px 22px; border-bottom:1px solid var(--border); display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.filter-chip { font-family:var(--mono); font-size:10px; padding:5px 12px; border-radius:14px; border:1px solid var(--border2); background:transparent; color:var(--text3); cursor:pointer; transition:all .15s; }
+.filter-chip:hover { color:var(--text); border-color:var(--text3); }
+.filter-chip.active { color:var(--accent); background:rgba(0,229,160,.08); border-color:rgba(0,229,160,.25); }
+
+.pagination { display:flex; align-items:center; justify-content:space-between; padding:14px 22px; border-top:1px solid var(--border); }
+.page-info { font-family:var(--mono); font-size:11px; color:var(--text3); }
+.page-btns { display:flex; gap:4px; }
+.page-btn { width:30px; height:30px; border:1px solid var(--border2); border-radius:5px; background:transparent; color:var(--text2); font-family:var(--mono); font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.page-btn:hover:not(:disabled) { background:var(--surface2); color:var(--text); }
+.page-btn:disabled { opacity:.3; cursor:not-allowed; }
+
+.empty-state { padding:60px 20px; text-align:center; color:var(--text3); font-family:var(--mono); font-size:12px; }
+
+.td-detail { max-width:300px; word-break:break-word; color:var(--text2); font-size:12px; }
+.td-ip { font-family:var(--mono); font-size:11px; color:var(--text3); }
+.td-time { font-family:var(--mono); font-size:11px; color:var(--text2); white-space:nowrap; }
+
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+@media(max-width:768px){ .main{padding:16px} .form-row{flex-direction:column} .nav-links{display:none} }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo"><div class="logo-dot"></div>ТЕНДЕР</div>
+    <div class="nav-links">
+      <a class="nav-link" href="/">Dashboard</a>
+      <a class="nav-link active" href="/admin">Админ</a>
+    </div>
+    <div class="header-right">
+      <span class="user-badge" id="user-badge"></span>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('users',this)">Хэрэглэгчид</button>
+      <button class="tab" onclick="switchTab('logs',this)">Лог</button>
+      <button class="tab" onclick="switchTab('uploads',this)">Upload түүх</button>
+    </div>
+
+    <!-- USERS TAB -->
+    <div class="tab-panel active" id="panel-users">
+      <div class="card">
+        <div class="add-user-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Нэвтрэх нэр</label>
+              <input class="form-input" type="text" id="new-username" placeholder="username">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Бүтэн нэр</label>
+              <input class="form-input" type="text" id="new-fullname" placeholder="Овог Нэр">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Нууц үг</label>
+              <input class="form-input" type="password" id="new-password" placeholder="********">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Эрх</label>
+              <select class="form-select" id="new-role">
+                <option value="viewer">viewer</option>
+                <option value="editor">editor</option>
+                <option value="admin">admin</option>
+              </select>
+            </div>
+            <div class="form-group" style="justify-content:flex-end">
+              <button class="btn btn-primary" onclick="addUser()">+ Нэмэх</button>
+            </div>
+          </div>
+          <div class="form-msg" id="user-msg"></div>
+        </div>
+        <div class="card-header">
+          <span class="card-title">Хэрэглэгчид</span>
+          <span class="card-count" id="user-count">0</span>
+        </div>
+        <table>
+          <thead><tr>
+            <th>ID</th><th>Нэвтрэх нэр</th><th>Бүтэн нэр</th><th>Эрх</th><th>Бүртгүүлсэн</th><th></th>
+          </tr></thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+        <div class="empty-state" id="users-empty" style="display:none">Хэрэглэгч байхгүй</div>
+      </div>
+    </div>
+
+    <!-- LOGS TAB -->
+    <div class="tab-panel" id="panel-logs">
+      <div class="card">
+        <div class="log-filters">
+          <button class="filter-chip active" onclick="setLogFilter('all',this)">Бүгд</button>
+          <button class="filter-chip" onclick="setLogFilter('login',this)">Нэвтэрсэн</button>
+          <button class="filter-chip" onclick="setLogFilter('login_failed',this)">Буруу нэвтрэлт</button>
+          <button class="filter-chip" onclick="setLogFilter('logout',this)">Гарсан</button>
+          <button class="filter-chip" onclick="setLogFilter('upload',this)">Upload</button>
+          <button class="filter-chip" onclick="setLogFilter('user_created',this)">Хэрэглэгч+</button>
+          <button class="filter-chip" onclick="setLogFilter('user_deleted',this)">Хэрэглэгч-</button>
+        </div>
+        <div class="card-header">
+          <span class="card-title">Үйлдлийн лог</span>
+          <span class="card-count" id="log-count">0</span>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Цаг</th><th>Хэрэглэгч</th><th>Үйлдэл</th><th>Дэлгэрэнгүй</th><th>IP</th>
+          </tr></thead>
+          <tbody id="logs-tbody"></tbody>
+        </table>
+        <div class="empty-state" id="logs-empty" style="display:none">Лог байхгүй</div>
+        <div class="pagination" id="logs-pagination"></div>
+      </div>
+    </div>
+
+    <!-- UPLOADS TAB -->
+    <div class="tab-panel" id="panel-uploads">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Upload түүх</span>
+          <span class="card-count" id="upload-count">0</span>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Цаг</th><th>Хэрэглэгч</th><th>Файл</th><th>Нийт</th><th>Шинэ</th><th>Шинэчлэгдсэн</th><th>Ижил</th>
+          </tr></thead>
+          <tbody id="uploads-tbody"></tbody>
+        </table>
+        <div class="empty-state" id="uploads-empty" style="display:none">Upload түүх байхгүй</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+let logState = { filter: 'all', page: 1, perPage: 30 };
+
+// ── AUTH CHECK ──
+async function checkAuth() {
+  try {
+    const r = await fetch('/api/me');
+    const data = await r.json();
+    if (!r.ok || !data.logged_in || data.user.role !== 'admin') {
+      window.location.href = '/';
+      return;
+    }
+    currentUser = data.user;
+    document.getElementById('user-badge').textContent = currentUser.full_name + ' (admin)';
+    loadUsers();
+    loadLogs();
+    loadUploads();
+  } catch(e) { window.location.href = '/'; }
+}
+
+// ── TABS ──
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+// ── USERS ──
+async function loadUsers() {
+  const r = await fetch('/api/users');
+  const users = await r.json();
+  document.getElementById('user-count').textContent = users.length;
+
+  if (!users.length) {
+    document.getElementById('users-tbody').innerHTML = '';
+    document.getElementById('users-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('users-empty').style.display = 'none';
+  document.getElementById('users-tbody').innerHTML = users.map(u => {
+    const roleCls = 'role-' + u.role;
+    const date = new Date(u.created_at).toLocaleDateString('mn-MN');
+    const isMe = u.username === currentUser.username;
+    return `<tr>
+      <td class="td-mono" style="color:var(--text3)">${u.id}</td>
+      <td class="td-mono" style="color:var(--accent)">${u.username}</td>
+      <td>${u.full_name}</td>
+      <td><span class="role-badge ${roleCls}">${u.role}</span></td>
+      <td class="td-time">${date}</td>
+      <td>${isMe ? '' : `<button class="btn btn-danger btn-small" onclick="deleteUser(${u.id},'${u.username}')">Устгах</button>`}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function addUser() {
+  const msg = document.getElementById('user-msg');
+  const username = document.getElementById('new-username').value.trim();
+  const full_name = document.getElementById('new-fullname').value.trim();
+  const password = document.getElementById('new-password').value.trim();
+  const role = document.getElementById('new-role').value;
+  msg.textContent = ''; msg.className = 'form-msg';
+
+  if (!username || !full_name || !password) { msg.textContent = 'Бүх талбарыг бөглөнө үү'; msg.classList.add('err'); return; }
+
+  const r = await fetch('/api/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, full_name, password, role })
+  });
+  const data = await r.json();
+  if (r.ok) {
+    msg.textContent = `${username} амжилттай нэмэгдлээ`; msg.classList.add('ok');
+    document.getElementById('new-username').value = '';
+    document.getElementById('new-fullname').value = '';
+    document.getElementById('new-password').value = '';
+    loadUsers();
+  } else {
+    msg.textContent = data.error || 'Алдаа'; msg.classList.add('err');
+  }
+}
+
+async function deleteUser(id, username) {
+  if (!confirm(`"${username}" хэрэглэгчийг устгах уу?`)) return;
+  const r = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+  if (r.ok) loadUsers();
+}
+
+// ── LOGS ──
+function setLogFilter(action, btn) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  logState.filter = action;
+  logState.page = 1;
+  loadLogs();
+}
+
+async function loadLogs() {
+  let url = `/api/logs?limit=${logState.perPage}&offset=${(logState.page-1)*logState.perPage}`;
+  if (logState.filter !== 'all') url += `&action=${logState.filter}`;
+
+  const r = await fetch(url);
+  const data = await r.json();
+  document.getElementById('log-count').textContent = data.total;
+
+  if (!data.logs.length) {
+    document.getElementById('logs-tbody').innerHTML = '';
+    document.getElementById('logs-empty').style.display = 'block';
+    document.getElementById('logs-pagination').innerHTML = '';
+    return;
+  }
+  document.getElementById('logs-empty').style.display = 'none';
+  document.getElementById('logs-tbody').innerHTML = data.logs.map(l => {
+    const time = new Date(l.created_at).toLocaleString('mn-MN');
+    const actCls = 'act-' + l.action;
+    const actionLabel = {
+      login:'Нэвтэрсэн', login_failed:'Буруу нэвтрэлт', logout:'Гарсан',
+      upload:'Upload', user_created:'Хэрэглэгч+', user_deleted:'Хэрэглэгч-'
+    }[l.action] || l.action;
+    return `<tr>
+      <td class="td-time">${time}</td>
+      <td class="td-mono" style="color:var(--accent)">${l.username || '—'}</td>
+      <td><span class="action-badge ${actCls}">${actionLabel}</span></td>
+      <td class="td-detail">${l.detail || '—'}</td>
+      <td class="td-ip">${l.ip_address || '—'}</td>
+    </tr>`;
+  }).join('');
+
+  // Pagination
+  const maxP = Math.max(1, Math.ceil(data.total / logState.perPage));
+  const pages = [];
+  for (let p = Math.max(1, logState.page-2); p <= Math.min(maxP, logState.page+2); p++) pages.push(p);
+  document.getElementById('logs-pagination').innerHTML = `
+    <div class="page-info">Нийт <b>${data.total}</b> бичлэг</div>
+    <div class="page-btns">
+      <button class="page-btn" onclick="logPg(${logState.page-1})" ${logState.page<=1?'disabled':''}>&#8249;</button>
+      ${pages.map(p => `<button class="page-btn${p===logState.page?' active':''}" onclick="logPg(${p})" style="${p===logState.page?'color:var(--accent);border-color:rgba(0,229,160,.3)':''}">${p}</button>`).join('')}
+      <button class="page-btn" onclick="logPg(${logState.page+1})" ${logState.page>=maxP?'disabled':''}>&#8250;</button>
+    </div>`;
+}
+
+function logPg(p) { logState.page = Math.max(1, p); loadLogs(); }
+
+// ── UPLOADS ──
+async function loadUploads() {
+  const r = await fetch('/api/tenders/history');
+  const data = await r.json();
+  document.getElementById('upload-count').textContent = data.length;
+
+  if (!data.length) {
+    document.getElementById('uploads-tbody').innerHTML = '';
+    document.getElementById('uploads-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('uploads-empty').style.display = 'none';
+  document.getElementById('uploads-tbody').innerHTML = data.map(h => {
+    const time = new Date(h.uploaded_at).toLocaleString('mn-MN');
+    return `<tr>
+      <td class="td-time">${time}</td>
+      <td class="td-mono" style="color:var(--accent)">${h.username}</td>
+      <td>${h.filename}</td>
+      <td class="td-mono">${h.total_in_file}</td>
+      <td class="td-mono" style="color:var(--accent)">+${h.inserted}</td>
+      <td class="td-mono" style="color:var(--work)">~${h.updated}</td>
+      <td class="td-mono" style="color:var(--text3)">=${h.unchanged}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── INIT ──
+checkAuth();
+</script>
+</body>
+</html>

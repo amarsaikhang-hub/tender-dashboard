@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Худалдан авалтын төлөвлөгөө — tender.gov.mn</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f6ff; --surface: #ffffff; --surface2: #f7f9fc;
+  --border: #e2e8f0; --border2: #cbd5e1;
+  --accent: #0ea5e9; --accent2: #0284c7; --accent-bg: rgba(14,165,233,.08);
+  --text: #0f172a; --text2: #475569; --text3: #94a3b8;
+  --work: #3b82f6; --work-bg: rgba(59,130,246,.08);
+  --goods: #10b981; --goods-bg: rgba(16,185,129,.08);
+  --compare: #f59e0b; --compare-bg: rgba(245,158,11,.08);
+  --open: #8b5cf6; --open-bg: rgba(139,92,246,.08);
+  --danger: #ef4444;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 6px rgba(0,0,0,.05), 0 2px 4px rgba(0,0,0,.04);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,.07), 0 4px 10px rgba(0,0,0,.04);
+  --radius: 12px;
+  --mono: 'JetBrains Mono', monospace; --sans: 'Inter', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.6; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+.app { display:flex; flex-direction:column; min-height:100vh; }
+header { border-bottom:1px solid var(--border); padding:0 32px; height:64px; display:flex; align-items:center; gap:24px; position:sticky; top:0; background:rgba(255,255,255,.85); backdrop-filter:blur(16px) saturate(180%); z-index:100; }
+.logo { font-family:var(--mono); font-size:14px; font-weight:700; color:var(--accent2); letter-spacing:.06em; text-transform:uppercase; display:flex; align-items:center; gap:8px; text-decoration:none; }
+.logo-dot { width:10px; height:10px; background:linear-gradient(135deg, var(--accent), #06b6d4); border-radius:50%; }
+.header-nav { display:flex; gap:4px; margin-left:16px; }
+.nav-link { font-family:var(--sans); font-size:13px; font-weight:500; padding:8px 16px; border-radius:8px; text-decoration:none; color:var(--text3); transition:all .15s; white-space:nowrap; }
+.nav-link:hover { background:var(--surface2); color:var(--text); }
+.nav-link.active { background:var(--accent-bg); color:var(--accent2); font-weight:600; }
+.user-info { display:flex; align-items:center; gap:10px; margin-left:auto; }
+.user-badge { font-family:var(--sans); font-size:12px; font-weight:500; color:var(--accent2); background:var(--accent-bg); border:1px solid rgba(14,165,233,.15); border-radius:8px; padding:5px 12px; }
+.logout-btn { font-family:var(--sans); font-size:12px; font-weight:500; color:var(--text3); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:6px 14px; cursor:pointer; transition:all .15s; }
+.logout-btn:hover { color:var(--danger); border-color:var(--danger); }
+.role-badge { font-family:var(--sans); font-size:10px; font-weight:600; padding:2px 8px; border-radius:5px; margin-left:6px; }
+.role-badge.admin { background:rgba(245,158,11,.1); color:#d97706; }
+.role-badge.editor { background:rgba(59,130,246,.08); color:var(--work); }
+.role-badge.viewer { background:var(--surface2); color:var(--text3); }
+
+/* Stats */
+.stats-bar { display:grid; grid-template-columns:repeat(4,1fr); background:var(--surface); border-bottom:1px solid var(--border); }
+.stat-item { padding:22px 28px; border-right:1px solid var(--border); position:relative; transition:background .2s; }
+.stat-item:last-child { border-right:none; }
+.stat-item::after { content:''; position:absolute; bottom:0;left:0;right:0; height:3px; background:linear-gradient(90deg, var(--accent), #06b6d4); transform:scaleX(0); transform-origin:left; transition:transform .3s; }
+.stat-item:hover { background:#f8fafc; }
+.stat-item:hover::after { transform:scaleX(1); }
+.stat-label { font-size:11px; font-weight:500; letter-spacing:.05em; color:var(--text3); text-transform:uppercase; margin-bottom:6px; }
+.stat-num { font-family:var(--mono); font-size:28px; font-weight:700; line-height:1; }
+.stat-sub { font-size:11px; color:var(--text3); margin-top:4px; }
+
+/* Toolbar */
+.toolbar { display:flex; align-items:center; gap:12px; padding:16px 24px; border-bottom:1px solid var(--border); background:var(--surface); flex-wrap:wrap; }
+.toolbar-left { display:flex; align-items:center; gap:10px; flex:1; flex-wrap:wrap; }
+.toolbar-right { display:flex; align-items:center; gap:10px; }
+.filter-select { background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:var(--sans); font-size:12px; padding:8px 12px; outline:none; cursor:pointer; min-width:130px; }
+.filter-select:focus { border-color:var(--accent); }
+.search-input { background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:var(--sans); font-size:13px; padding:8px 14px; outline:none; width:260px; transition:all .2s; }
+.search-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(14,165,233,.1); background:#fff; }
+.search-input::placeholder { color:var(--text3); }
+.result-count { font-size:12px; color:var(--text3); }
+.upload-btn { display:flex; align-items:center; gap:6px; background:linear-gradient(135deg, var(--accent), var(--accent2)); border:none; border-radius:8px; color:#fff; font-family:var(--sans); font-size:12px; font-weight:600; padding:8px 18px; cursor:pointer; transition:all .2s; box-shadow:0 2px 6px rgba(14,165,233,.2); white-space:nowrap; }
+.upload-btn:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(14,165,233,.3); }
+
+/* Table */
+.table-wrap { flex:1; overflow:auto; background:var(--surface2); }
+table { width:100%; border-collapse:collapse; }
+thead tr { background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:2; }
+th { font-family:var(--sans); font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text3); padding:13px 14px; text-align:left; white-space:nowrap; }
+tbody tr { background:var(--surface); border-bottom:1px solid var(--border); transition:all .15s; animation:fadeRow .2s ease both; }
+tbody tr:hover { background:#f0f9ff; box-shadow:inset 3px 0 0 var(--accent); }
+td { padding:13px 14px; font-size:13px; vertical-align:middle; }
+.td-num { font-family:var(--mono); font-size:11px; color:var(--text3); }
+.td-code { font-family:var(--mono); font-size:11px; color:var(--accent2); }
+.td-name { max-width:280px; font-weight:500; }
+.td-amount { font-family:var(--mono); font-size:12px; text-align:right; white-space:nowrap; }
+.td-date { font-family:var(--mono); font-size:11px; color:var(--text3); white-space:nowrap; }
+.td-sub { font-size:11px; color:var(--text2); max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.badge { display:inline-flex; align-items:center; font-family:var(--sans); font-size:10px; font-weight:600; padding:4px 10px; border-radius:6px; white-space:nowrap; }
+.badge-work { background:var(--work-bg); color:var(--work); }
+.badge-goods { background:var(--goods-bg); color:var(--goods); }
+.badge-open { background:var(--open-bg); color:var(--open); }
+.empty-state { padding:60px 28px; text-align:center; color:var(--text3); font-size:14px; }
+
+/* Pagination */
+.pagination { display:flex; align-items:center; justify-content:space-between; padding:14px 24px; border-top:1px solid var(--border); background:var(--surface); }
+.page-info { font-family:var(--sans); font-size:13px; color:var(--text3); }
+.page-info b { color:var(--text); }
+.page-btns { display:flex; gap:4px; }
+.page-btn { width:34px; height:34px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text2); font-family:var(--mono); font-size:12px; cursor:pointer; transition:all .15s; display:flex; align-items:center; justify-content:center; }
+.page-btn:hover:not(:disabled) { background:var(--surface2); color:var(--text); }
+.page-btn.current { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+.page-btn:disabled { opacity:.3; cursor:not-allowed; }
+
+/* Upload Modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,.2); z-index:500; display:none; backdrop-filter:blur(4px); align-items:center; justify-content:center; }
+.modal-overlay.show { display:flex; }
+.modal { width:480px; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:32px; box-shadow:var(--shadow-lg); }
+.modal h3 { font-size:18px; font-weight:600; margin-bottom:4px; }
+.modal p { font-size:13px; color:var(--text3); margin-bottom:24px; }
+.form-field { margin-bottom:16px; }
+.form-label { display:block; font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text3); margin-bottom:6px; }
+.form-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:13px; padding:11px 14px; outline:none; transition:all .2s; }
+.form-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(14,165,233,.1); background:#fff; }
+.drop-zone { border:2px dashed #bae6fd; border-radius:12px; padding:36px; text-align:center; cursor:pointer; transition:all .2s; background:var(--surface2); margin-bottom:16px; }
+.drop-zone:hover, .drop-zone.drag-over { border-color:var(--accent); background:#f0f9ff; }
+.drop-icon { font-size:36px; margin-bottom:8px; }
+.drop-text { font-size:13px; color:var(--text2); }
+.file-info { font-family:var(--mono); font-size:12px; color:var(--accent2); margin-top:8px; }
+.form-error { margin-top:12px; font-size:11px; color:var(--danger); min-height:14px; }
+.modal-btns { display:flex; gap:10px; margin-top:24px; }
+.modal-btns button { flex:1; padding:11px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
+.btn-cancel { background:var(--surface2); border:1px solid var(--border); color:var(--text2); }
+.btn-cancel:hover { border-color:var(--border2); color:var(--text); }
+.btn-submit { background:linear-gradient(135deg, var(--accent), var(--accent2)); border:none; color:#fff; box-shadow:0 2px 6px rgba(14,165,233,.2); }
+.btn-submit:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(14,165,233,.3); }
+.btn-submit:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+.upload-result { margin-top:16px; padding:16px; border-radius:10px; background:var(--surface2); border:1px solid var(--border); }
+.upload-result h4 { font-size:13px; font-weight:600; color:var(--goods); margin-bottom:8px; }
+.upload-result .row { display:flex; justify-content:space-between; padding:4px 0; font-size:13px; }
+.upload-result .row .label { color:var(--text3); }
+.upload-result .row .val { font-family:var(--mono); font-weight:600; }
+.val.green { color:var(--goods); }
+.val.blue { color:var(--work); }
+
+/* Login */
+.login-screen { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, #e0f2fe 0%, #f0f6ff 50%, #ede9fe 100%); }
+.login-screen.hidden { display:none; }
+.login-box { width:420px; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:44px 40px; box-shadow:var(--shadow-lg); text-align:center; }
+.login-msg { font-size:14px; color:var(--text2); }
+.login-msg a { color:var(--accent2); font-weight:600; }
+
+/* AI Chat */
+.ai-toggle { position:fixed; bottom:24px; right:24px; width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg, #8b5cf6, #6d28d9); border:none; color:#fff; font-size:22px; cursor:pointer; box-shadow:0 4px 16px rgba(109,40,217,.3); z-index:300; transition:all .2s; display:flex; align-items:center; justify-content:center; }
+.ai-toggle:hover { transform:scale(1.08); box-shadow:0 6px 24px rgba(109,40,217,.4); }
+.ai-panel { position:fixed; bottom:90px; right:24px; width:420px; max-height:520px; background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow-lg); z-index:300; display:none; flex-direction:column; overflow:hidden; }
+.ai-panel.show { display:flex; }
+.ai-header { display:flex; align-items:center; gap:10px; padding:16px 18px; border-bottom:1px solid var(--border); background:linear-gradient(135deg, rgba(139,92,246,.06), rgba(109,40,217,.04)); }
+.ai-header-icon { width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #8b5cf6, #6d28d9); display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px; flex-shrink:0; }
+.ai-header-text { flex:1; }
+.ai-header-title { font-size:14px; font-weight:600; color:var(--text); }
+.ai-header-sub { font-size:11px; color:var(--text3); }
+.ai-close { background:none; border:none; color:var(--text3); font-size:18px; cursor:pointer; padding:4px; }
+.ai-close:hover { color:var(--text); }
+.ai-messages { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px; min-height:200px; max-height:340px; }
+.ai-msg { padding:10px 14px; border-radius:10px; font-size:13px; line-height:1.6; max-width:90%; word-break:break-word; }
+.ai-msg.system { background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(109,40,217,.05)); color:var(--text); align-self:flex-start; border:1px solid rgba(139,92,246,.12); }
+.ai-msg.user { background:var(--accent-bg); color:var(--text); align-self:flex-end; border:1px solid rgba(14,165,233,.12); }
+.ai-msg.loading { color:var(--text3); font-style:italic; }
+.ai-input-wrap { display:flex; gap:8px; padding:12px 16px; border-top:1px solid var(--border); background:var(--surface2); }
+.ai-input { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:13px; padding:10px 14px; outline:none; resize:none; font-family:var(--sans); }
+.ai-input:focus { border-color:#8b5cf6; }
+.ai-input::placeholder { color:var(--text3); }
+.ai-send { background:linear-gradient(135deg, #8b5cf6, #6d28d9); border:none; border-radius:10px; color:#fff; font-size:13px; font-weight:600; padding:10px 18px; cursor:pointer; transition:all .2s; white-space:nowrap; }
+.ai-send:hover { transform:translateY(-1px); }
+.ai-send:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+.ai-quick { display:flex; gap:6px; padding:0 16px 12px; flex-wrap:wrap; }
+.ai-quick-btn { font-size:11px; padding:5px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text2); cursor:pointer; transition:all .15s; white-space:nowrap; }
+.ai-quick-btn:hover { border-color:#8b5cf6; color:#6d28d9; background:rgba(139,92,246,.04); }
+@media(max-width:600px){ .ai-panel{right:8px;left:8px;width:auto;bottom:80px;} }
+
+@keyframes fadeRow { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+/* Tabs */
+.tab-bar { display:flex; gap:0; background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; }
+.tab-btn { font-family:var(--sans); font-size:13px; font-weight:500; padding:14px 20px; border:none; background:none; color:var(--text3); cursor:pointer; transition:all .15s; position:relative; white-space:nowrap; }
+.tab-btn:hover { color:var(--text); }
+.tab-btn.active { color:var(--accent2); font-weight:600; }
+.tab-btn.active::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:2px; background:var(--accent); border-radius:2px 2px 0 0; }
+.tab-btn .tab-count { font-family:var(--mono); font-size:11px; background:var(--surface2); color:var(--text3); padding:2px 8px; border-radius:10px; margin-left:6px; }
+.tab-btn.active .tab-count { background:var(--accent-bg); color:var(--accent2); }
+.tab-page { display:none; flex-direction:column; flex:1; }
+.tab-page.active { display:flex; }
+
+/* Tender deadline colors */
+.dl-active { color:var(--goods); font-weight:500; }
+.dl-soon { color:var(--compare); font-weight:500; }
+.tender-link { color:var(--accent2); text-decoration:none; font-family:var(--mono); font-size:11px; }
+.tender-link:hover { text-decoration:underline; }
+
+@media(max-width:900px){ .stats-bar{grid-template-columns:repeat(2,1fr)} .toolbar-left{flex-direction:column;align-items:stretch} .search-input{width:100%} .modal{width:95%} }
+</style>
+</head>
+<body>
+
+<!-- LOGIN CHECK -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-msg">Эхлээд <a href="/">нэвтрэх</a> шаардлагатай</div>
+  </div>
+</div>
+
+<div class="app" id="main-app" style="display:none">
+  <header>
+    <a class="logo" href="/"><div class="logo-dot"></div>TENDER.GOV.MN</a>
+    <nav class="header-nav">
+      <a class="nav-link" href="/">Хянах самбар</a>
+      <a class="nav-link" href="/tenders">Тендер</a>
+      <a class="nav-link active" href="/procurement">Худалдан авалт</a>
+      <a class="nav-link" href="/joined">Оролцсон</a>
+      <a class="nav-link" href="/suggested">Санал болгох</a>
+    </nav>
+    <div class="user-info">
+      <span class="user-badge" id="user-badge"></span>
+      <button class="logout-btn" onclick="doLogout()">Гарах</button>
+    </div>
+  </header>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('plan',this)">Төлөвлөгөө<span class="tab-count" id="tab-plan-count">—</span></button>
+    <button class="tab-btn" onclick="switchTab('pending',this)">Хэрэгжилт<span class="tab-count" id="tab-pending-count">—</span></button>
+  </div>
+
+  <!-- TAB: Төлөвлөгөө -->
+  <div class="tab-page active" id="tab-plan">
+    <div class="stats-bar">
+      <div class="stat-item"><div class="stat-label">Нийт төлөвлөгөө</div><div class="stat-num" style="color:var(--accent)" id="st-total">—</div><div class="stat-sub">бүртгэл</div></div>
+      <div class="stat-item"><div class="stat-label">Нийт төсөв</div><div class="stat-num" style="color:var(--work)" id="st-budget">—</div><div class="stat-sub">мянган ₮</div></div>
+      <div class="stat-item"><div class="stat-label">Төрлөөр</div><div class="stat-num" style="color:var(--compare);font-size:16px" id="st-types">—</div><div class="stat-sub">бараа / ажил / үйлчилгээ</div></div>
+      <div class="stat-item"><div class="stat-label">Байгууллага</div><div class="stat-num" style="color:var(--open)" id="st-orgs">—</div><div class="stat-sub">бүртгэлтэй</div></div>
+    </div>
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <select class="filter-select" id="f-org" onchange="load()"><option value="">Бүх байгууллага</option></select>
+        <select class="filter-select" id="f-year" onchange="load()"><option value="">Бүх он</option></select>
+        <select class="filter-select" id="f-type" onchange="load()">
+          <option value="">Бүх төрөл</option><option value="Бараа">Бараа</option><option value="Ажил">Ажил</option><option value="Үйлчилгээ">Үйлчилгээ</option>
+        </select>
+        <input class="search-input" id="search" placeholder="Хайх... (нэр, код, дэд ангилал)" oninput="debounceSearch()">
+      </div>
+      <div class="toolbar-right">
+        <span class="result-count" id="result-count"></span>
+        <button class="upload-btn" id="btn-upload" onclick="openModal()" style="display:none">+ Excel оруулах</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:40px">№</th>
+          <th>ТШ код</th><th>Нэр</th><th>Төрөл</th><th>Арга</th>
+          <th style="text-align:right">Төсөвт өртөг</th><th style="text-align:right">Санхүүжих</th>
+          <th>Тендер зарлах</th><th>Дэд ангилал</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="empty-state" id="empty" style="display:none">Төлөвлөгөө олдсонгүй. Excel файл оруулна уу.</div>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  <!-- TAB: Хэрэгжилт (тендер дуусаагүй / зарлагдаагүй) -->
+  <div class="tab-page" id="tab-pending">
+    <div class="stats-bar">
+      <div class="stat-item" style="cursor:pointer" onclick="pdFilterStatus('')"><div class="stat-label">Хэрэгжүүлэх</div><div class="stat-num" style="color:var(--accent)" id="pd-total">—</div><div class="stat-sub">нийт</div></div>
+      <div class="stat-item" style="cursor:pointer" onclick="pdFilterStatus('not_announced')"><div class="stat-label">Тендер зарлагдаагүй</div><div class="stat-num" style="color:var(--danger)" id="pd-not">—</div><div class="stat-sub">хүлээгдэж буй</div></div>
+      <div class="stat-item" style="cursor:pointer" onclick="pdFilterStatus('active')"><div class="stat-label">Тендер идэвхтэй</div><div class="stat-num" style="color:var(--goods)" id="pd-active">—</div><div class="stat-sub">хугацаа дуусаагүй</div></div>
+      <div class="stat-item" style="cursor:pointer" onclick="pdFilterStatus('done')"><div class="stat-label">Дууссан (нуугдсан)</div><div class="stat-num" style="color:var(--text3)" id="pd-done">—</div><div class="stat-sub">хасагдсан</div></div>
+    </div>
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <select class="filter-select" id="pd-f-status" onchange="loadPending()">
+          <option value="">Бүх статус</option>
+          <option value="not_announced">Зарлагдаагүй</option>
+          <option value="active">Идэвхтэй</option>
+        </select>
+        <select class="filter-select" id="pd-f-type" onchange="loadPending()">
+          <option value="">Бүх төрөл</option><option value="Бараа">Бараа</option><option value="Ажил">Ажил</option><option value="Үйлчилгээ">Үйлчилгээ</option>
+        </select>
+        <input class="search-input" id="pd-search" placeholder="Хайх... (нэр, код)" oninput="debouncePending()">
+      </div>
+      <div class="toolbar-right">
+        <span class="result-count" id="pd-result-count"></span>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:40px">№</th>
+          <th>ТШ код</th><th>Нэр</th><th>Төрөл</th>
+          <th style="text-align:right">Төсөв</th><th>Тендер зарлах</th>
+          <th>Статус</th><th>Дэд ангилал</th>
+        </tr></thead>
+        <tbody id="pd-tbody"></tbody>
+      </table>
+      <div class="empty-state" id="pd-empty" style="display:none">Бүх худалдан авалт дууссан байна</div>
+    </div>
+    <div class="pagination" id="pd-pagination"></div>
+  </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal-overlay" id="upload-modal">
+  <div class="modal">
+    <h3>Худалдан авалтын төлөвлөгөө оруулах</h3>
+    <p>Байгууллагын ГОК Excel файлыг (.xlsx) оруулна уу</p>
+    <div class="form-field">
+      <label class="form-label">Байгууллагын нэр</label>
+      <input class="form-input" type="text" id="m-org" placeholder="Жишээ: Эрдэнэт үйлдвэр ТӨҮГ">
+    </div>
+    <div class="form-field">
+      <label class="form-label">Төлөвлөгөөний он</label>
+      <input class="form-input" type="number" id="m-year" value="2026" min="2020" max="2035">
+    </div>
+    <div class="drop-zone" id="drop-zone">
+      <div class="drop-icon">📊</div>
+      <div class="drop-text">Excel файл чирж тавих эсвэл дарж сонгох</div>
+      <div class="file-info" id="file-info"></div>
+      <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none">
+    </div>
+    <div class="form-error" id="form-error"></div>
+    <div id="upload-result" style="display:none"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Хаах</button>
+      <button class="btn-submit" id="btn-submit" onclick="submitUpload()">Оруулах</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI Chat -->
+<button class="ai-toggle" id="ai-toggle" onclick="toggleAI()" title="AI Туслах">🤖</button>
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-header">
+    <div class="ai-header-icon">🤖</div>
+    <div class="ai-header-text">
+      <div class="ai-header-title">AI Туслах</div>
+      <div class="ai-header-sub">Тендер & худалдан авалтын шинжилгээ</div>
+    </div>
+    <button class="ai-close" onclick="toggleAI()">✕</button>
+  </div>
+  <div class="ai-messages" id="ai-messages">
+    <div class="ai-msg system">Сайн байна уу! Тендер, худалдан авалтын төлөвлөгөөний талаар асууж болно. Жишээ нь: "Ямар тендерүүд удахгүй дуусах вэ?" эсвэл "Төсөв хамгийн их худалдан авалт юу вэ?"</div>
+  </div>
+  <div class="ai-quick">
+    <button class="ai-quick-btn" onclick="askAI('Удахгүй дуусах тендерүүдийг жагсаа')">Удахгүй дуусах</button>
+    <button class="ai-quick-btn" onclick="askAI('Төсөв хамгийн өндөр 5 худалдан авалтыг хэл')">Том төсөвтэй</button>
+    <button class="ai-quick-btn" onclick="askAI('Ерөнхий тойм өг')">Тойм</button>
+    <button class="ai-quick-btn" onclick="askAI('Эрсдэл, анхааруулга байгаа юу?')">Эрсдэл</button>
+  </div>
+  <div class="ai-input-wrap">
+    <input class="ai-input" id="ai-input" placeholder="Асуулт бичих..." onkeydown="if(event.key==='Enter')sendAI()">
+    <button class="ai-send" id="ai-send" onclick="sendAI()">Илгээх</button>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+let state = { page: 1, perPage: 30, total: 0, plans: [] };
+let searchTimer = null;
+
+// ── AUTH ──
+async function checkAuth() {
+  try {
+    const r = await fetch('/api/me');
+    if (r.ok) {
+      const d = await r.json();
+      if (d.logged_in) { currentUser = d.user; showApp(); return; }
+    }
+  } catch(e) {}
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+
+function showApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('main-app').style.display = 'flex';
+  const badge = document.getElementById('user-badge');
+  badge.innerHTML = currentUser.full_name + `<span class="role-badge ${currentUser.role}">${currentUser.role}</span>`;
+  const uploadBtn = document.getElementById('btn-upload');
+  uploadBtn.style.display = (currentUser.role === 'admin' || currentUser.role === 'editor') ? '' : 'none';
+  loadStats();
+  load();
+  loadPendingCount();
+}
+
+async function doLogout() {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/';
+}
+
+// ── STATS ──
+async function loadStats() {
+  try {
+    const r = await fetch('/api/procurement/stats');
+    if (!r.ok) return;
+    const d = await r.json();
+    document.getElementById('st-total').textContent = d.total_count || '0';
+    document.getElementById('tab-plan-count').textContent = d.total_count || '0';
+    document.getElementById('st-budget').textContent = d.total_budget ? (d.total_budget / 1000).toLocaleString('mn-MN', {maximumFractionDigits:0}) : '0';
+    document.getElementById('st-orgs').textContent = d.organizations ? d.organizations.length : '0';
+    const mainTypes = (d.types || []).filter(t => ['Бараа','Ажил','Үйлчилгээ'].includes(t.ts_type));
+    const ts = mainTypes.map(t => `${t.ts_type}: ${t.cnt}`).join(' / ');
+    document.getElementById('st-types').textContent = ts || '—';
+
+    // Filters
+    const orgSel = document.getElementById('f-org');
+    const cv = orgSel.value;
+    orgSel.innerHTML = '<option value="">Бүх байгууллага</option>';
+    (d.organizations || []).forEach(o => { orgSel.innerHTML += `<option value="${esc(o)}">${esc(o)}</option>`; });
+    orgSel.value = cv;
+
+    const ySel = document.getElementById('f-year');
+    const cy = ySel.value;
+    ySel.innerHTML = '<option value="">Бүх он</option>';
+    (d.years || []).forEach(y => { ySel.innerHTML += `<option value="${y}">${y}</option>`; });
+    ySel.value = cy;
+  } catch(e) {}
+}
+
+// ── LOAD & RENDER ──
+function debounceSearch() { clearTimeout(searchTimer); searchTimer = setTimeout(() => { state.page = 1; load(); }, 300); }
+
+async function load() {
+  const org = document.getElementById('f-org').value;
+  const year = document.getElementById('f-year').value;
+  const type = document.getElementById('f-type').value;
+  const search = document.getElementById('search').value.trim();
+  const offset = (state.page - 1) * state.perPage;
+
+  let url = `/api/procurement?limit=${state.perPage}&offset=${offset}`;
+  if (org) url += `&organization=${encodeURIComponent(org)}`;
+  if (year) url += `&year=${year}`;
+  if (type) url += `&type=${encodeURIComponent(type)}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return;
+    const d = await r.json();
+    state.plans = d.plans;
+    state.total = d.total;
+    render();
+  } catch(e) {}
+}
+
+function render() {
+  const { plans, total, page, perPage } = state;
+  const tbody = document.getElementById('tbody');
+  const empty = document.getElementById('empty');
+  document.getElementById('result-count').textContent = `${total} бичлэг`;
+
+  if (!plans.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    tbody.innerHTML = plans.map(p => {
+      const budget = p.budget_amount ? Number(p.budget_amount).toLocaleString('mn-MN') : '—';
+      const fund = p.annual_funding ? Number(p.annual_funding).toLocaleString('mn-MN') : '—';
+      const tDate = p.tender_announce_date ? p.tender_announce_date.substring(0,10) : '—';
+      const cls = p.ts_type === 'Бараа' ? 'badge-goods' : p.ts_type === 'Ажил' ? 'badge-work' : 'badge-open';
+      return `<tr>
+        <td class="td-num">${p.row_num || ''}</td>
+        <td class="td-code">${esc(p.ts_code || '')}</td>
+        <td class="td-name">${esc(p.name || '')}</td>
+        <td><span class="badge ${cls}">${esc(p.ts_type || '')}</span></td>
+        <td style="font-size:11px;color:var(--text2)">${esc(p.procurement_method || '')}</td>
+        <td class="td-amount">${budget}</td>
+        <td class="td-amount" style="color:var(--goods)">${fund}</td>
+        <td class="td-date">${tDate}</td>
+        <td class="td-sub" title="${esc(p.sub_category || '')}">${esc(p.sub_category || '')}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const maxP = Math.max(1, Math.ceil(total / perPage));
+  const pages = [];
+  for (let i = Math.max(1, page-2); i <= Math.min(maxP, page+2); i++) pages.push(i);
+  document.getElementById('pagination').innerHTML = `
+    <div class="page-info">Нийт <b>${total}</b> &middot; <b>${maxP}</b> хуудас</div>
+    <div class="page-btns">
+      <button class="page-btn" onclick="pg(1)" ${page<=1?'disabled':''}>«</button>
+      <button class="page-btn" onclick="pg(${page-1})" ${page<=1?'disabled':''}>‹</button>
+      ${pages.map(p => `<button class="page-btn${p===page?' current':''}" onclick="pg(${p})">${p}</button>`).join('')}
+      <button class="page-btn" onclick="pg(${page+1})" ${page>=maxP?'disabled':''}>›</button>
+      <button class="page-btn" onclick="pg(${maxP})" ${page>=maxP?'disabled':''}>»</button>
+    </div>`;
+}
+
+function pg(p) { state.page = Math.max(1, p); load(); }
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+// ── UPLOAD MODAL ──
+let selectedFile = null;
+
+function openModal() {
+  document.getElementById('upload-modal').classList.add('show');
+  document.getElementById('form-error').textContent = '';
+  document.getElementById('upload-result').style.display = 'none';
+  document.getElementById('file-info').textContent = '';
+  selectedFile = null;
+}
+function closeModal() { document.getElementById('upload-modal').classList.remove('show'); }
+
+const dz = document.getElementById('drop-zone');
+const fi = document.getElementById('file-input');
+dz.addEventListener('click', () => fi.click());
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); if(e.dataTransfer.files[0]) pickFile(e.dataTransfer.files[0]); });
+fi.addEventListener('change', e => { if(e.target.files[0]) pickFile(e.target.files[0]); });
+
+function pickFile(f) {
+  selectedFile = f;
+  document.getElementById('file-info').textContent = f.name + ' (' + (f.size/1024).toFixed(0) + ' KB)';
+}
+
+async function submitUpload() {
+  const org = document.getElementById('m-org').value.trim();
+  const year = document.getElementById('m-year').value;
+  const errEl = document.getElementById('form-error');
+  const btn = document.getElementById('btn-submit');
+  errEl.textContent = '';
+
+  if (!org) { errEl.textContent = 'Байгууллагын нэр оруулна уу'; return; }
+  if (!selectedFile) { errEl.textContent = 'Excel файл сонгоно уу'; return; }
+
+  const fd = new FormData();
+  fd.append('file', selectedFile);
+  fd.append('organization', org);
+  fd.append('plan_year', year);
+
+  btn.disabled = true;
+  btn.textContent = 'Оруулж байна...';
+  try {
+    const r = await fetch('/api/procurement/upload', { method: 'POST', body: fd });
+    const data = await r.json();
+    if (r.ok && data.success) {
+      const s = data.summary;
+      document.getElementById('upload-result').innerHTML = `
+        <div class="upload-result">
+          <h4>Амжилттай!</h4>
+          <div class="row"><span class="label">Нийт мөр</span><span class="val">${s.total}</span></div>
+          <div class="row"><span class="label">Шинээр нэмсэн</span><span class="val green">+${s.inserted}</span></div>
+          <div class="row"><span class="label">Шинэчлэгдсэн</span><span class="val blue">${s.updated}</span></div>
+        </div>`;
+      document.getElementById('upload-result').style.display = 'block';
+      loadStats();
+      load();
+    } else {
+      errEl.textContent = data.error || 'Алдаа гарлаа';
+    }
+  } catch(e) { errEl.textContent = 'Сервертэй холбогдож чадсангүй'; }
+  btn.disabled = false;
+  btn.textContent = 'Оруулах';
+}
+
+// ── TABS ──
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'pending') { loadPending(); }
+}
+
+// ── ХЭРЭГЖИЛТ (pending) ──
+async function loadPendingCount() {
+  try {
+    const r = await fetch('/api/procurement/pending?limit=1&offset=0');
+    if (!r.ok) return;
+    const d = await r.json();
+    document.getElementById('tab-pending-count').textContent = d.total || 0;
+  } catch(e) {}
+}
+
+let pdState = { page: 1, perPage: 30, total: 0, plans: [] };
+let pdSearchTimer = null;
+
+function debouncePending() { clearTimeout(pdSearchTimer); pdSearchTimer = setTimeout(() => { pdState.page = 1; loadPending(); }, 300); }
+
+function pdFilterStatus(status) {
+  document.getElementById('pd-f-status').value = status;
+  pdState.page = 1;
+  loadPending();
+}
+
+async function loadPending() {
+  const type = document.getElementById('pd-f-type').value;
+  const status = document.getElementById('pd-f-status').value;
+  const search = document.getElementById('pd-search').value.trim();
+  const offset = (pdState.page - 1) * pdState.perPage;
+
+  let url = `/api/procurement/pending?limit=${pdState.perPage}&offset=${offset}`;
+  if (type) url += `&type=${encodeURIComponent(type)}`;
+  if (status) url += `&status=${status}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return;
+    const d = await r.json();
+    pdState.plans = d.plans;
+    pdState.total = d.total;
+
+    document.getElementById('tab-pending-count').textContent = d.total;
+    document.getElementById('pd-total').textContent = d.stats.total;
+    document.getElementById('pd-not').textContent = d.stats.not_announced;
+    document.getElementById('pd-active').textContent = d.stats.announced;
+
+    // "Дууссан" тоо = нийт төлөвлөгөө - хэрэгжүүлэх
+    fetch('/api/procurement/stats').then(r=>r.json()).then(s=>{
+      const done = (s.total_count||0) - d.stats.total;
+      document.getElementById('pd-done').textContent = done >= 0 ? done : 0;
+    }).catch(()=>{});
+
+    renderPending();
+  } catch(e) {}
+}
+
+function renderPending() {
+  const { plans, total, page, perPage } = pdState;
+  const tbody = document.getElementById('pd-tbody');
+  const empty = document.getElementById('pd-empty');
+  document.getElementById('pd-result-count').textContent = `${total} бичлэг`;
+
+  if (!plans.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    tbody.innerHTML = plans.map(p => {
+      const budget = p.budget_amount ? Number(p.budget_amount).toLocaleString('mn-MN') : '—';
+      const tDate = p.tender_announce_date ? p.tender_announce_date.substring(0,10) : '—';
+      const typeCls = p.ts_type === 'Бараа' ? 'badge-goods' : p.ts_type === 'Ажил' ? 'badge-work' : 'badge-open';
+
+      let statusHtml;
+      if (p.tender_status === 'not_announced') {
+        statusHtml = '<span class="badge" style="background:rgba(239,68,68,.08);color:var(--danger)">Зарлагдаагүй</span>';
+      } else {
+        const dl = new Date(p.tender_deadline);
+        const dlStr = `${dl.getMonth()+1}/${dl.getDate()}`;
+        statusHtml = `<span class="badge badge-goods">Идэвхтэй</span> <span class="td-date">${dlStr}</span>`;
+        if (p.tender_link) {
+          statusHtml += ` <a class="tender-link" href="${esc(p.tender_link)}" target="_blank">↗</a>`;
+        }
+      }
+
+      return `<tr>
+        <td class="td-num">${p.row_num || ''}</td>
+        <td class="td-code">${esc(p.ts_code || '')}</td>
+        <td class="td-name">${esc(p.name || '')}</td>
+        <td><span class="badge ${typeCls}">${esc(p.ts_type || '')}</span></td>
+        <td class="td-amount">${budget}</td>
+        <td class="td-date">${tDate}</td>
+        <td>${statusHtml}</td>
+        <td class="td-sub" title="${esc(p.sub_category || '')}">${esc(p.sub_category || '')}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const maxP = Math.max(1, Math.ceil(total / perPage));
+  const pages = [];
+  for (let i = Math.max(1, page-2); i <= Math.min(maxP, page+2); i++) pages.push(i);
+  document.getElementById('pd-pagination').innerHTML = `
+    <div class="page-info">Нийт <b>${total}</b> &middot; <b>${maxP}</b> хуудас</div>
+    <div class="page-btns">
+      <button class="page-btn" onclick="pdPg(1)" ${page<=1?'disabled':''}>«</button>
+      <button class="page-btn" onclick="pdPg(${page-1})" ${page<=1?'disabled':''}>‹</button>
+      ${pages.map(p => `<button class="page-btn${p===page?' current':''}" onclick="pdPg(${p})">${p}</button>`).join('')}
+      <button class="page-btn" onclick="pdPg(${page+1})" ${page>=maxP?'disabled':''}>›</button>
+      <button class="page-btn" onclick="pdPg(${maxP})" ${page>=maxP?'disabled':''}>»</button>
+    </div>`;
+}
+
+function pdPg(p) { pdState.page = Math.max(1, p); loadPending(); }
+
+// ── AI CHAT ──
+function toggleAI() {
+  document.getElementById('ai-panel').classList.toggle('show');
+  if (document.getElementById('ai-panel').classList.contains('show')) {
+    document.getElementById('ai-input').focus();
+  }
+}
+
+function askAI(q) {
+  document.getElementById('ai-input').value = q;
+  sendAI();
+}
+
+async function sendAI() {
+  const input = document.getElementById('ai-input');
+  const q = input.value.trim();
+  if (!q) return;
+
+  const msgs = document.getElementById('ai-messages');
+  msgs.innerHTML += `<div class="ai-msg user">${esc(q)}</div>`;
+  msgs.innerHTML += `<div class="ai-msg system loading" id="ai-loading">Боловсруулж байна...</div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+  input.value = '';
+
+  const btn = document.getElementById('ai-send');
+  btn.disabled = true;
+
+  try {
+    const r = await fetch('/api/ai/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q })
+    });
+    const data = await r.json();
+    const loading = document.getElementById('ai-loading');
+    if (loading) loading.remove();
+
+    if (r.ok) {
+      const answer = (data.answer || '').replace(/\n/g, '<br>');
+      msgs.innerHTML += `<div class="ai-msg system">${answer}</div>`;
+    } else {
+      msgs.innerHTML += `<div class="ai-msg system" style="color:var(--danger)">${esc(data.error || 'Алдаа гарлаа')}</div>`;
+    }
+  } catch(e) {
+    const loading = document.getElementById('ai-loading');
+    if (loading) loading.remove();
+    msgs.innerHTML += `<div class="ai-msg system" style="color:var(--danger)">Сервертэй холбогдож чадсангүй</div>`;
+  }
+
+  btn.disabled = false;
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// INIT
+document.addEventListener('DOMContentLoaded', checkAuth);
+</script>
+</body>
+</html>

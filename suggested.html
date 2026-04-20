@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Санал болгох тендер — tender.gov.mn</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f0f6ff;--surface:#fff;--surface2:#f7f9fc;--border:#e2e8f0;--border2:#cbd5e1;
+  --accent:#0ea5e9;--accent2:#0284c7;--accent-bg:rgba(14,165,233,.08);
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+  --work:#3b82f6;--work-bg:rgba(59,130,246,.08);--goods:#10b981;--goods-bg:rgba(16,185,129,.08);
+  --compare:#f59e0b;--compare-bg:rgba(245,158,11,.08);--open:#8b5cf6;--open-bg:rgba(139,92,246,.08);
+  --danger:#ef4444;--shadow-lg:0 10px 25px rgba(0,0,0,.07);
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh}
+.app{display:flex;flex-direction:column;min-height:100vh}
+header{border-bottom:1px solid var(--border);padding:0 32px;height:64px;display:flex;align-items:center;gap:24px;position:sticky;top:0;background:rgba(255,255,255,.85);backdrop-filter:blur(16px) saturate(180%);z-index:100}
+.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent2);letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:8px;text-decoration:none}
+.logo-dot{width:10px;height:10px;background:linear-gradient(135deg,var(--accent),#06b6d4);border-radius:50%}
+.header-nav{display:flex;gap:4px;margin-left:16px}
+.nav-link{font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;text-decoration:none;color:var(--text3);transition:all .15s}
+.nav-link:hover{background:var(--surface2);color:var(--text)}
+.nav-link.active{background:var(--accent-bg);color:var(--accent2);font-weight:600}
+.user-info{display:flex;align-items:center;gap:10px;margin-left:auto}
+.user-badge{font-size:12px;font-weight:500;color:var(--accent2);background:var(--accent-bg);border:1px solid rgba(14,165,233,.15);border-radius:8px;padding:5px 12px}
+.logout-btn{font-size:12px;color:var(--text3);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 14px;cursor:pointer}
+.logout-btn:hover{color:var(--danger);border-color:var(--danger)}
+.role-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;margin-left:6px}
+.role-badge.admin{background:rgba(245,158,11,.1);color:#d97706}
+
+/* Profile section */
+.profile-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px}
+.profile-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.profile-title{font-size:13px;font-weight:600;flex:1}
+.profile-btn{font-size:12px;font-weight:600;padding:7px 16px;border-radius:8px;border:none;cursor:pointer;transition:all .2s}
+.btn-generate{background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;box-shadow:0 2px 8px rgba(109,40,217,.2)}
+.btn-generate:hover{transform:translateY(-1px)}
+.btn-generate:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-add{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+.btn-add:hover{border-color:var(--accent);color:var(--accent2)}
+.kw-list{display:flex;flex-wrap:wrap;gap:6px;min-height:28px}
+.kw-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:4px 10px;border-radius:6px;background:var(--accent-bg);color:var(--accent2);border:1px solid rgba(14,165,233,.12)}
+.kw-tag .weight{font-family:var(--mono);font-size:10px;color:var(--text3)}
+.kw-tag .del{cursor:pointer;color:var(--text3);font-size:13px;margin-left:2px}
+.kw-tag .del:hover{color:var(--danger)}
+.kw-cat{background:var(--open-bg);color:var(--open);border-color:rgba(139,92,246,.12)}
+.profile-info{font-size:11px;color:var(--text3);margin-top:8px}
+
+/* Toolbar */
+.toolbar{display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap}
+.toolbar-left{display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap}
+.toolbar-right{display:flex;align-items:center;gap:10px}
+.match-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;padding:8px 18px;cursor:pointer;transition:all .2s;box-shadow:0 2px 6px rgba(14,165,233,.2)}
+.match-btn:hover{transform:translateY(-1px)}
+.match-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.filter-select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:8px 12px;outline:none;cursor:pointer}
+.result-count{font-size:12px;color:var(--text3)}
+
+/* Stats */
+.stats-bar{display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);border-bottom:1px solid var(--border)}
+.stat-item{padding:18px 24px;border-right:1px solid var(--border)}
+.stat-item:last-child{border-right:none}
+.stat-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.stat-num{font-family:var(--mono);font-size:24px;font-weight:700;line-height:1}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* Table */
+.table-wrap{flex:1;overflow:auto;background:var(--surface2)}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2}
+th{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);padding:13px 14px;text-align:left;white-space:nowrap}
+tbody tr{background:var(--surface);border-bottom:1px solid var(--border);transition:all .15s;animation:fadeRow .2s ease both}
+tbody tr:hover{background:#f0f9ff;box-shadow:inset 3px 0 0 var(--accent)}
+td{padding:13px 14px;font-size:13px;vertical-align:middle}
+.td-name{max-width:280px;font-weight:500}
+.td-org{font-size:12px;color:var(--text2);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.td-date{font-family:var(--mono);font-size:11px;color:var(--text3);white-space:nowrap}
+.td-link{color:var(--accent2);text-decoration:none;font-size:11px;font-weight:500}
+.td-link:hover{text-decoration:underline}
+.badge{display:inline-flex;font-size:10px;font-weight:600;padding:4px 10px;border-radius:6px;white-space:nowrap}
+.badge-goods{background:var(--goods-bg);color:var(--goods)}
+.badge-work{background:var(--work-bg);color:var(--work)}
+.badge-open{background:var(--open-bg);color:var(--open)}
+.score-wrap{display:flex;align-items:center;gap:6px}
+.score-bar{width:50px;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px}
+.score-high{background:var(--goods)}.score-mid{background:var(--compare)}.score-low{background:var(--text3)}
+.score-num{font-family:var(--mono);font-size:12px;font-weight:700;min-width:30px}
+.kw-matched{display:flex;flex-wrap:wrap;gap:3px}
+.kw-m{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--goods-bg);color:var(--goods)}
+.empty{text-align:center;padding:60px;color:var(--text3)}
+.empty a{color:var(--accent2)}
+
+/* Add keyword modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.2);z-index:500;display:none;backdrop-filter:blur(4px);align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{width:380px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;box-shadow:var(--shadow-lg)}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:16px}
+.form-field{margin-bottom:14px}
+.form-label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:5px}
+.form-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none}
+.form-input:focus{border-color:var(--accent)}
+.modal-btns{display:flex;gap:8px;margin-top:18px}
+.modal-btns button{flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer}
+
+.login-screen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#e0f2fe 0%,#f0f6ff 50%,#ede9fe 100%)}
+.login-screen.hidden{display:none}
+.login-box{width:420px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:44px 40px;box-shadow:var(--shadow-lg);text-align:center}
+.login-msg{font-size:14px;color:var(--text2)}.login-msg a{color:var(--accent2);font-weight:600}
+
+.loading-box{text-align:center;padding:40px;color:var(--text3)}
+.spinner{display:inline-block;width:32px;height:32px;border:3px solid var(--border);border-top-color:#8b5cf6;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeRow{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="login-screen">
+  <div class="login-box"><div class="login-msg">Эхлээд <a href="/">нэвтрэх</a> шаардлагатай</div></div>
+</div>
+
+<div class="app" id="main-app" style="display:none">
+  <header>
+    <a class="logo" href="/"><div class="logo-dot"></div>TENDER.GOV.MN</a>
+    <nav class="header-nav">
+      <a class="nav-link" href="/">Хянах самбар</a>
+      <a class="nav-link" href="/tenders">Тендер</a>
+      <a class="nav-link" href="/procurement">Худалдан авалт</a>
+      <a class="nav-link" href="/joined">Оролцсон</a>
+      <a class="nav-link active" href="/suggested">Санал болгох</a>
+    </nav>
+    <div class="user-info">
+      <span class="user-badge" id="user-badge"></span>
+      <button class="logout-btn" onclick="doLogout()">Гарах</button>
+    </div>
+  </header>
+
+  <!-- А: Профайл -->
+  <div class="profile-bar">
+    <div class="profile-header">
+      <span class="profile-title">Компанийн профайл — түлхүүр үгс</span>
+      <button class="profile-btn btn-generate" id="btn-gen" onclick="generateProfile()">🤖 AI Профайл үүсгэх</button>
+      <button class="profile-btn btn-add" onclick="openAddKw()">+ Үг нэмэх</button>
+    </div>
+    <div class="kw-list" id="kw-list"><span style="color:var(--text3);font-size:12px">Профайл үүсгээгүй</span></div>
+    <div class="profile-info" id="profile-info"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar" id="stats-bar" style="display:none">
+    <div class="stat-item"><div class="stat-label">Тохирсон тендер</div><div class="stat-num" style="color:var(--accent)" id="st-tenders">—</div><div class="stat-sub">идэвхтэй</div></div>
+    <div class="stat-item"><div class="stat-label">Тохирсон төлөвлөгөө</div><div class="stat-num" style="color:var(--open)" id="st-plans">—</div><div class="stat-sub">худалдан авалт</div></div>
+    <div class="stat-item"><div class="stat-label">Нийт илэрц</div><div class="stat-num" style="color:var(--goods)" id="st-total">—</div><div class="stat-sub">тохирсон</div></div>
+  </div>
+
+  <!-- Б: Шүүлт -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <button class="match-btn" id="btn-match" onclick="runMatch()">Шүүх</button>
+      <select class="filter-select" id="f-source" onchange="runMatch()">
+        <option value="tenders">Идэвхтэй тендер</option>
+        <option value="plans">Худалдан авалтын төлөвлөгөө</option>
+      </select>
+    </div>
+    <div class="toolbar-right">
+      <span class="result-count" id="result-count"></span>
+    </div>
+  </div>
+
+  <div class="loading-box" id="loading" style="display:none"><div class="spinner"></div><div>Шүүж байна...</div></div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th style="width:40px">#</th>
+        <th>Тохирол</th><th>Дугаар</th><th>Нэр</th><th>Байгууллага</th><th>Төрөл</th>
+        <th>Арга</th><th>Тааралт</th><th>Дуусах</th><th></th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty">Эхлээд профайл үүсгээд "Шүүх" товч дарна уу</div>
+  </div>
+  <div class="pagination" id="pagination" style="display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-top:1px solid var(--border);background:var(--surface)"></div>
+</div>
+
+<!-- Add keyword modal -->
+<div class="modal-overlay" id="kw-modal">
+  <div class="modal">
+    <h3>Түлхүүр үг нэмэх</h3>
+    <div class="form-field">
+      <label class="form-label">Үг</label>
+      <input class="form-input" id="kw-word" placeholder="жишээ: трансформатор">
+    </div>
+    <div class="form-field">
+      <label class="form-label">Ангилал</label>
+      <input class="form-input" id="kw-cat" placeholder="жишээ: тоног төхөөрөмж">
+    </div>
+    <div class="form-field">
+      <label class="form-label">Жин (0.1 - 1.0)</label>
+      <input class="form-input" type="number" id="kw-weight" value="0.8" min="0.1" max="1" step="0.1">
+    </div>
+    <div class="modal-btns">
+      <button style="background:var(--surface2);border:1px solid var(--border);color:var(--text2)" onclick="closeAddKw()">Болих</button>
+      <button style="background:var(--accent);border:none;color:#fff" onclick="addKw()">Нэмэх</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+
+async function checkAuth() {
+  try {
+    const r = await fetch('/api/me');
+    if (r.ok) { const d = await r.json(); if (d.logged_in) { currentUser=d.user; showApp(); return; } }
+  } catch(e) {}
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+function showApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('main-app').style.display='flex';
+  document.getElementById('user-badge').innerHTML=currentUser.full_name+`<span class="role-badge ${currentUser.role}">${currentUser.role}</span>`;
+  loadKeywords();
+}
+async function doLogout(){await fetch('/api/logout',{method:'POST'});window.location.href='/';}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+
+// ── ПРОФАЙЛ ──
+async function loadKeywords() {
+  try {
+    const r = await fetch('/api/profile/keywords');
+    if (!r.ok) return;
+    const d = await r.json();
+    const list = document.getElementById('kw-list');
+    if (!d.keywords.length) {
+      list.innerHTML = '<span style="color:var(--text3);font-size:12px">Профайл үүсгээгүй. "AI Профайл үүсгэх" дарна уу.</span>';
+    } else {
+      list.innerHTML = d.keywords.map(k =>
+        `<span class="kw-tag ${k.category?'kw-cat':''}" title="${esc(k.category||'')}">
+          ${esc(k.keyword)} <span class="weight">${k.weight}</span>
+          <span class="del" onclick="deleteKw('${esc(k.keyword)}')">&times;</span>
+        </span>`
+      ).join('');
+    }
+    document.getElementById('profile-info').textContent =
+      `Оролцсон: ${d.joined_count} | Шалгарсан: ${d.won_count} | Идэвхтэй тендер: ${d.active_count} | Түлхүүр үг: ${d.keywords.length}`;
+  } catch(e) {}
+}
+
+async function generateProfile() {
+  const btn = document.getElementById('btn-gen');
+  btn.disabled = true; btn.textContent = 'Үүсгэж байна...';
+  try {
+    const r = await fetch('/api/profile/generate', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    const d = await r.json();
+    if (r.ok) { loadKeywords(); }
+    else { alert(d.error || 'Алдаа'); }
+  } catch(e) { alert('Сервертэй холбогдож чадсангүй'); }
+  btn.disabled = false; btn.textContent = '🤖 AI Профайл үүсгэх';
+}
+
+async function deleteKw(word) {
+  await fetch('/api/profile/keywords', {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',keyword:word})});
+  loadKeywords();
+}
+
+function openAddKw() { document.getElementById('kw-modal').classList.add('show'); document.getElementById('kw-word').focus(); }
+function closeAddKw() { document.getElementById('kw-modal').classList.remove('show'); }
+
+async function addKw() {
+  const word = document.getElementById('kw-word').value.trim();
+  if (!word) return;
+  await fetch('/api/profile/keywords', {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action:'add', keyword:word, weight:parseFloat(document.getElementById('kw-weight').value)||0.8, category:document.getElementById('kw-cat').value.trim()})
+  });
+  closeAddKw();
+  document.getElementById('kw-word').value='';
+  document.getElementById('kw-cat').value='';
+  loadKeywords();
+}
+
+// ── ШҮҮЛТ (SQL, Claude дуудахгүй) ──
+let allResults = [];
+let matchPage = 1;
+const matchPerPage = 30;
+
+async function runMatch() {
+  const source = document.getElementById('f-source').value;
+  const btn = document.getElementById('btn-match');
+  btn.disabled = true;
+  document.getElementById('loading').style.display='';
+  document.getElementById('empty').style.display='none';
+  document.getElementById('tbody').innerHTML='';
+  matchPage = 1;
+
+  try {
+    const r = await fetch(`/api/tenders/match?source=${source}&limit=5000`);
+    const d = await r.json();
+    document.getElementById('loading').style.display='none';
+
+    if (!r.ok) { document.getElementById('empty').textContent=d.error;document.getElementById('empty').style.display='';btn.disabled=false;return; }
+
+    allResults = d.results || [];
+    document.getElementById('result-count').textContent = `${d.total} тохирсон`;
+
+    document.getElementById('stats-bar').style.display='';
+    if (source === 'tenders') {
+      document.getElementById('st-tenders').textContent = d.total;
+      fetch('/api/tenders/match?source=plans&limit=5000').then(r=>r.json()).then(p=>{document.getElementById('st-plans').textContent=p.total||0;}).catch(()=>{});
+    } else {
+      document.getElementById('st-plans').textContent = d.total;
+      fetch('/api/tenders/match?source=tenders&limit=5000').then(r=>r.json()).then(p=>{document.getElementById('st-tenders').textContent=p.total||0;}).catch(()=>{});
+    }
+    document.getElementById('st-total').textContent = d.total;
+
+    if (!allResults.length) { document.getElementById('empty').textContent='Тохирох илэрц олдсонгүй';document.getElementById('empty').style.display='';btn.disabled=false;return; }
+
+    renderMatch();
+  } catch(e) {
+    document.getElementById('loading').style.display='none';
+    document.getElementById('empty').textContent='Сервертэй холбогдож чадсангүй';document.getElementById('empty').style.display='';
+  }
+  btn.disabled=false;
+}
+
+function renderMatch() {
+  const total = allResults.length;
+  const maxP = Math.max(1, Math.ceil(total / matchPerPage));
+  const start = (matchPage - 1) * matchPerPage;
+  const slice = allResults.slice(start, start + matchPerPage);
+
+  document.getElementById('tbody').innerHTML = slice.map((r,i) => {
+    const s = r.score_pct;
+    const sCls = s>=70?'score-high':s>=40?'score-mid':'score-low';
+    const sColor = s>=70?'goods':s>=40?'compare':'text3';
+    const typeCls = (r.type||'').includes('Бараа')?'badge-goods':(r.type||'').includes('Ажил')?'badge-work':'badge-open';
+    const dl = r.deadline ? r.deadline.substring(0,10) : '';
+    const kwHtml = (r.matched_keywords||[]).map(k=>`<span class="kw-m">${esc(k)}</span>`).join('');
+    const link = r.link ? `<a class="td-link" href="${esc(r.link)}" target="_blank">Үзэх →</a>` : '';
+
+    const code = r.id || '';
+    const method = r.method || '';
+
+    return `<tr>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${start+i+1}</td>
+      <td><div class="score-wrap"><span class="score-num" style="color:var(--${sColor})">${s}%</span><div class="score-bar"><div class="score-fill ${sCls}" style="width:${s}%"></div></div></div></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--accent2)">${link?`<a class="td-link" href="${esc(r.link)}" target="_blank">${esc(code)}</a>`:esc(code)}</td>
+      <td class="td-name">${esc(r.name)}</td>
+      <td class="td-org" title="${esc(r.organization||'')}">${esc(r.organization||'')}</td>
+      <td>${r.type?`<span class="badge ${typeCls}">${esc(r.type)}</span>`:''}</td>
+      <td style="font-size:11px;color:var(--text2)">${esc(method)}</td>
+      <td><div class="kw-matched">${kwHtml}</div></td>
+      <td class="td-date">${dl}</td>
+      <td>${link?`<a class="td-link" href="${esc(r.link)}" target="_blank">Үзэх →</a>`:''}</td>
+    </tr>`;
+  }).join('');
+
+  // Pagination
+  const pages=[]; for(let p=Math.max(1,matchPage-2);p<=Math.min(maxP,matchPage+2);p++) pages.push(p);
+  document.getElementById('pagination').innerHTML = `
+    <div style="font-size:13px;color:var(--text3)">Нийт <b style="color:var(--text)">${total}</b> &middot; <b style="color:var(--text)">${maxP}</b> хуудас</div>
+    <div style="display:flex;gap:4px">
+      <button class="page-btn" onclick="mPg(1)" ${matchPage<=1?'disabled':''}>«</button>
+      <button class="page-btn" onclick="mPg(${matchPage-1})" ${matchPage<=1?'disabled':''}>‹</button>
+      ${pages.map(p=>`<button class="page-btn${p===matchPage?' current':''}" onclick="mPg(${p})">${p}</button>`).join('')}
+      <button class="page-btn" onclick="mPg(${matchPage+1})" ${matchPage>=maxP?'disabled':''}>›</button>
+      <button class="page-btn" onclick="mPg(${maxP})" ${matchPage>=maxP?'disabled':''}>»</button>
+    </div>`;
+}
+
+function mPg(p) { matchPage = Math.max(1, p); renderMatch(); window.scrollTo(0, 300); }
+
+document.addEventListener('DOMContentLoaded', checkAuth);
+</script>
+</body>
+</html>

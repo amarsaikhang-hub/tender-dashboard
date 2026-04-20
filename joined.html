@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Оролцсон тендер — tender.gov.mn</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f6ff; --surface: #ffffff; --surface2: #f7f9fc;
+  --border: #e2e8f0; --border2: #cbd5e1;
+  --accent: #0ea5e9; --accent2: #0284c7; --accent-bg: rgba(14,165,233,.08);
+  --text: #0f172a; --text2: #475569; --text3: #94a3b8;
+  --work: #3b82f6; --work-bg: rgba(59,130,246,.08);
+  --goods: #10b981; --goods-bg: rgba(16,185,129,.08);
+  --compare: #f59e0b; --compare-bg: rgba(245,158,11,.08);
+  --open: #8b5cf6; --open-bg: rgba(139,92,246,.08);
+  --danger: #ef4444;
+  --shadow-lg: 0 10px 25px rgba(0,0,0,.07);
+  --mono: 'JetBrains Mono', monospace; --sans: 'Inter', sans-serif;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font-family:var(--sans); font-size:14px; line-height:1.6; min-height:100vh; -webkit-font-smoothing:antialiased; }
+.app { display:flex; flex-direction:column; min-height:100vh; }
+header { border-bottom:1px solid var(--border); padding:0 32px; height:64px; display:flex; align-items:center; gap:24px; position:sticky; top:0; background:rgba(255,255,255,.85); backdrop-filter:blur(16px) saturate(180%); z-index:100; }
+.logo { font-family:var(--mono); font-size:14px; font-weight:700; color:var(--accent2); letter-spacing:.06em; text-transform:uppercase; display:flex; align-items:center; gap:8px; text-decoration:none; }
+.logo-dot { width:10px; height:10px; background:linear-gradient(135deg, var(--accent), #06b6d4); border-radius:50%; }
+.header-nav { display:flex; gap:4px; margin-left:16px; }
+.nav-link { font-size:13px; font-weight:500; padding:8px 16px; border-radius:8px; text-decoration:none; color:var(--text3); transition:all .15s; }
+.nav-link:hover { background:var(--surface2); color:var(--text); }
+.nav-link.active { background:var(--accent-bg); color:var(--accent2); font-weight:600; }
+.user-info { display:flex; align-items:center; gap:10px; margin-left:auto; }
+.user-badge { font-size:12px; font-weight:500; color:var(--accent2); background:var(--accent-bg); border:1px solid rgba(14,165,233,.15); border-radius:8px; padding:5px 12px; }
+.logout-btn { font-size:12px; font-weight:500; color:var(--text3); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:6px 14px; cursor:pointer; transition:all .15s; }
+.logout-btn:hover { color:var(--danger); border-color:var(--danger); }
+.role-badge { font-size:10px; font-weight:600; padding:2px 8px; border-radius:5px; margin-left:6px; }
+.role-badge.admin { background:rgba(245,158,11,.1); color:#d97706; }
+.role-badge.editor { background:var(--work-bg); color:var(--work); }
+.role-badge.viewer { background:var(--surface2); color:var(--text3); }
+
+.stats-bar { display:grid; grid-template-columns:repeat(4,1fr); background:var(--surface); border-bottom:1px solid var(--border); }
+.stat-item { padding:22px 28px; border-right:1px solid var(--border); cursor:pointer; transition:background .2s; position:relative; }
+.stat-item:last-child { border-right:none; }
+.stat-item:hover { background:#f8fafc; }
+.stat-item.active::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:var(--accent); border-radius:3px 3px 0 0; }
+.stat-label { font-size:11px; font-weight:500; color:var(--text3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
+.stat-num { font-family:var(--mono); font-size:28px; font-weight:700; line-height:1; }
+.stat-sub { font-size:11px; color:var(--text3); margin-top:4px; }
+
+.toolbar { display:flex; align-items:center; gap:12px; padding:16px 24px; border-bottom:1px solid var(--border); background:var(--surface); flex-wrap:wrap; }
+.toolbar-left { display:flex; align-items:center; gap:10px; flex:1; flex-wrap:wrap; }
+.toolbar-right { display:flex; align-items:center; gap:10px; }
+.filter-select { background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:12px; padding:8px 12px; outline:none; cursor:pointer; }
+.filter-select:focus { border-color:var(--accent); }
+.search-input { background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; padding:8px 14px; outline:none; width:280px; transition:all .2s; }
+.search-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(14,165,233,.1); background:#fff; }
+.search-input::placeholder { color:var(--text3); }
+.result-count { font-size:12px; color:var(--text3); }
+.upload-btn { display:flex; align-items:center; gap:6px; background:linear-gradient(135deg, var(--accent), var(--accent2)); border:none; border-radius:8px; color:#fff; font-size:12px; font-weight:600; padding:8px 18px; cursor:pointer; transition:all .2s; box-shadow:0 2px 6px rgba(14,165,233,.2); }
+.upload-btn:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(14,165,233,.3); }
+
+.table-wrap { flex:1; overflow:auto; background:var(--surface2); }
+table { width:100%; border-collapse:collapse; }
+thead tr { background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:2; }
+th { font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text3); padding:13px 14px; text-align:left; white-space:nowrap; }
+tbody tr { background:var(--surface); border-bottom:1px solid var(--border); transition:all .15s; animation:fadeRow .2s ease both; }
+tbody tr:hover { background:#f0f9ff; box-shadow:inset 3px 0 0 var(--accent); }
+td { padding:13px 14px; font-size:13px; vertical-align:middle; }
+.td-num { font-family:var(--mono); font-size:11px; color:var(--text3); }
+.td-code { font-family:var(--mono); font-size:11px; color:var(--accent2); }
+.td-code a { color:inherit; text-decoration:none; }
+.td-code a:hover { text-decoration:underline; }
+.td-name { max-width:300px; font-weight:500; }
+.td-org { font-size:12px; color:var(--text2); max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.badge { display:inline-flex; font-size:10px; font-weight:600; padding:4px 10px; border-radius:6px; white-space:nowrap; }
+.badge-goods { background:var(--goods-bg); color:var(--goods); }
+.badge-work { background:var(--work-bg); color:var(--work); }
+.badge-open { background:var(--open-bg); color:var(--open); }
+.status-badge { font-size:10px; font-weight:600; padding:4px 10px; border-radius:6px; }
+.status-done { background:var(--goods-bg); color:var(--goods); }
+.status-opened { background:var(--compare-bg); color:var(--compare); }
+.status-other { background:var(--surface2); color:var(--text3); }
+.empty-state { padding:60px 28px; text-align:center; color:var(--text3); font-size:14px; }
+
+.pagination { display:flex; align-items:center; justify-content:space-between; padding:14px 24px; border-top:1px solid var(--border); background:var(--surface); }
+.page-info { font-size:13px; color:var(--text3); }
+.page-info b { color:var(--text); }
+.page-btns { display:flex; gap:4px; }
+.page-btn { width:34px; height:34px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text2); font-family:var(--mono); font-size:12px; cursor:pointer; transition:all .15s; display:flex; align-items:center; justify-content:center; }
+.page-btn:hover:not(:disabled) { background:var(--surface2); color:var(--text); }
+.page-btn.current { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+.page-btn:disabled { opacity:.3; cursor:not-allowed; }
+
+.login-screen { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, #e0f2fe 0%, #f0f6ff 50%, #ede9fe 100%); }
+.login-screen.hidden { display:none; }
+.login-box { width:420px; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:44px 40px; box-shadow:var(--shadow-lg); text-align:center; }
+.login-msg { font-size:14px; color:var(--text2); }
+.login-msg a { color:var(--accent2); font-weight:600; }
+
+/* Upload Modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,.2); z-index:500; display:none; backdrop-filter:blur(4px); align-items:center; justify-content:center; }
+.modal-overlay.show { display:flex; }
+.modal { width:480px; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:32px; box-shadow:var(--shadow-lg); }
+.modal h3 { font-size:18px; font-weight:600; margin-bottom:4px; }
+.modal p { font-size:13px; color:var(--text3); margin-bottom:24px; }
+.drop-zone { border:2px dashed #bae6fd; border-radius:12px; padding:36px; text-align:center; cursor:pointer; transition:all .2s; background:var(--surface2); margin-bottom:16px; }
+.drop-zone:hover, .drop-zone.drag-over { border-color:var(--accent); background:#f0f9ff; }
+.file-info { font-family:var(--mono); font-size:12px; color:var(--accent2); margin-top:8px; }
+.form-error { margin-top:12px; font-size:11px; color:var(--danger); min-height:14px; }
+.upload-result { margin-top:16px; padding:16px; border-radius:10px; background:var(--surface2); border:1px solid var(--border); }
+.upload-result h4 { font-size:13px; font-weight:600; color:var(--goods); margin-bottom:8px; }
+.upload-result .row { display:flex; justify-content:space-between; padding:4px 0; font-size:13px; }
+.upload-result .row .label { color:var(--text3); }
+.upload-result .row .val { font-family:var(--mono); font-weight:600; }
+.val.green { color:var(--goods); }
+.val.blue { color:var(--work); }
+.modal-btns { display:flex; gap:10px; margin-top:24px; }
+.modal-btns button { flex:1; padding:11px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
+.btn-cancel { background:var(--surface2); border:1px solid var(--border); color:var(--text2); }
+.btn-cancel:hover { color:var(--text); }
+.btn-submit { background:linear-gradient(135deg, var(--accent), var(--accent2)); border:none; color:#fff; }
+.btn-submit:disabled { opacity:.5; cursor:not-allowed; }
+
+/* Detail Panel */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.15);z-index:199;display:none;backdrop-filter:blur(3px)}
+.overlay.show{display:block}
+.detail-panel{position:fixed;top:0;right:0;width:480px;height:100vh;background:var(--surface);border-left:1px solid var(--border);box-shadow:-8px 0 30px rgba(0,0,0,.06);z-index:200;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:28px 24px 40px}
+.detail-panel.open{transform:translateX(0)}
+.panel-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text3);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.panel-close:hover{color:var(--text)}
+.panel-title{font-size:16px;font-weight:600;margin-bottom:4px;padding-right:40px}
+.panel-code{font-family:var(--mono);font-size:12px;color:var(--accent2);margin-bottom:16px}
+.panel-badges{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.panel-section{margin-bottom:20px}
+.panel-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.panel-section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.panel-field{display:flex;padding:8px 0;border-bottom:1px solid var(--border);gap:10px}
+.panel-field:last-child{border-bottom:none}
+.field-label{font-size:11px;font-weight:600;color:var(--text3);width:90px;flex-shrink:0;text-transform:uppercase;letter-spacing:.04em}
+.field-val{font-size:13px;color:var(--text);flex:1;word-break:break-word}
+.panel-textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--sans);font-size:13px;padding:10px 12px;outline:none;resize:vertical;min-height:80px;line-height:1.6}
+.panel-textarea:focus{border-color:var(--accent)}
+.panel-textarea::placeholder{color:var(--text3)}
+.panel-save{width:100%;padding:11px;border-radius:8px;font-size:13px;font-weight:600;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;cursor:pointer;transition:all .2s;margin-top:8px}
+.panel-save:hover{transform:translateY(-1px)}
+.panel-save:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.ocr-btn{width:100%;padding:10px;border-radius:8px;font-size:12px;font-weight:600;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border:none;color:#fff;cursor:pointer;transition:all .2s;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:6px}
+.ocr-btn:hover{transform:translateY(-1px)}
+.ocr-btn:disabled{opacity:.5;transform:none;cursor:not-allowed}
+.ocr-drop{border:2px dashed #bae6fd;border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);font-size:12px;color:var(--text2);margin-bottom:8px}
+.ocr-drop:hover,.ocr-drop.drag-over{border-color:var(--accent);background:#f0f9ff}
+.ocr-file-info{font-family:var(--mono);font-size:11px;color:var(--accent2);margin-top:4px}
+.save-msg{font-size:11px;color:var(--goods);margin-top:6px;min-height:14px}
+
+/* Analysis */
+.analysis-summary { background:var(--compare-bg); border:1px solid rgba(245,158,11,.15); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--text2); margin-bottom:12px; line-height:1.6; }
+.analysis-stats { display:flex; gap:12px; margin-bottom:12px; }
+.a-stat { flex:1; text-align:center; padding:10px; border-radius:8px; background:var(--surface2); border:1px solid var(--border); }
+.a-stat-num { font-family:var(--mono); font-size:20px; font-weight:700; }
+.a-stat-label { font-size:10px; color:var(--text3); margin-top:2px; }
+.analysis-item { padding:10px 12px; border:1px solid var(--border); border-radius:8px; margin-bottom:6px; background:var(--surface2); }
+.analysis-item.met { border-left:3px solid var(--goods); }
+.analysis-item.not_met { border-left:3px solid var(--danger); }
+.analysis-item.unclear { border-left:3px solid var(--compare); }
+.a-header { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+.a-id { font-family:var(--mono); font-size:11px; font-weight:600; color:var(--accent2); }
+.a-status { font-size:10px; font-weight:600; padding:2px 8px; border-radius:5px; }
+.a-status-met { background:var(--goods-bg); color:var(--goods); }
+.a-status-not { background:rgba(239,68,68,.08); color:var(--danger); }
+.a-status-unc { background:var(--compare-bg); color:var(--compare); }
+.a-req { font-size:12px; font-weight:500; margin-bottom:3px; }
+.a-reason { font-size:11px; color:var(--text2); }
+.a-rec { font-size:11px; color:var(--accent2); margin-top:3px; font-style:italic; }
+.lessons { margin-top:12px; padding:10px 14px; background:linear-gradient(135deg,rgba(139,92,246,.04),rgba(109,40,217,.02)); border:1px solid rgba(139,92,246,.1); border-radius:8px; }
+.lessons-title { font-size:11px; font-weight:600; color:var(--open); margin-bottom:6px; }
+.lesson-item { font-size:12px; color:var(--text2); padding:2px 0; }
+
+@keyframes fadeRow { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+@media(max-width:900px){ .stats-bar{grid-template-columns:repeat(2,1fr)} .search-input{width:100%} .modal{width:95%} }
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="login-screen">
+  <div class="login-box"><div class="login-msg">Эхлээд <a href="/">нэвтрэх</a> шаардлагатай</div></div>
+</div>
+
+<div class="app" id="main-app" style="display:none">
+  <header>
+    <a class="logo" href="/"><div class="logo-dot"></div>TENDER.GOV.MN</a>
+    <nav class="header-nav">
+      <a class="nav-link" href="/">Хянах самбар</a>
+      <a class="nav-link" href="/tenders">Тендер</a>
+      <a class="nav-link" href="/procurement">Худалдан авалт</a>
+      <a class="nav-link active" href="/joined">Оролцсон</a>
+      <a class="nav-link" href="/suggested">Санал болгох</a>
+    </nav>
+    <div class="user-info">
+      <span class="user-badge" id="user-badge"></span>
+      <button class="logout-btn" onclick="doLogout()">Гарах</button>
+    </div>
+  </header>
+
+  <div class="stats-bar">
+    <div class="stat-item active" onclick="filterStat('all')"><div class="stat-label">Нийт оролцсон</div><div class="stat-num" style="color:var(--accent)" id="st-total">—</div><div class="stat-sub">тендер</div></div>
+    <div class="stat-item" onclick="filterStat('won')"><div class="stat-label">Шалгарсан</div><div class="stat-num" style="color:var(--goods)" id="st-won">—</div><div class="stat-sub">ялсан</div></div>
+    <div class="stat-item" onclick="filterStat('lost')"><div class="stat-label">Унасан</div><div class="stat-num" style="color:var(--danger)" id="st-lost">—</div><div class="stat-sub">шалгараагүй</div></div>
+    <div class="stat-item"><div class="stat-label">Байгууллага</div><div class="stat-num" style="color:var(--open)" id="st-orgs">—</div><div class="stat-sub">зарласан</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <select class="filter-select" id="f-won" onchange="load()">
+        <option value="">Шалгарсан / Унасан</option>
+        <option value="yes">Шалгарсан</option>
+        <option value="no">Унасан / Хүлээгдэж буй</option>
+      </select>
+      <select class="filter-select" id="f-status" onchange="load()">
+        <option value="">Бүх статус</option>
+        <option value="Үр дүн гарсан">Үр дүн гарсан</option>
+        <option value="Нээгдсэн">Нээгдсэн</option>
+        <option value="Хаагдсан">Хаагдсан</option>
+      </select>
+      <select class="filter-select" id="f-type" onchange="load()">
+        <option value="">Бүх төрөл</option>
+        <option value="Бараа">Бараа</option>
+        <option value="Ажил">Ажил</option>
+        <option value="Үйлчилгээ">Үйлчилгээ</option>
+      </select>
+      <input class="search-input" id="search" placeholder="Хайх... (нэр, дугаар, байгууллага)" oninput="debounce()">
+    </div>
+    <div class="toolbar-right">
+      <span class="result-count" id="result-count"></span>
+      <button class="upload-btn" id="btn-upload" onclick="openModal('joined')" style="display:none">+ Оролцсон JSON</button>
+      <button class="upload-btn" id="btn-upload-won" onclick="openModal('won')" style="display:none;margin-left:4px;background:linear-gradient(135deg,#10b981,#059669)">+ Шалгарсан JSON</button>
+      <button class="upload-btn" id="btn-batch" onclick="openBatch()" style="display:none;margin-left:4px;background:linear-gradient(135deg,#8b5cf6,#6d28d9)">📁 PDF Batch</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th style="width:40px">#</th>
+        <th>Дугаар</th><th>Нэр</th><th>Байгууллага</th>
+        <th>Төрөл</th><th>Арга</th><th>Статус</th><th>Шалгарсан</th><th></th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty-state" id="empty" style="display:none">Оролцсон тендер олдсонгүй. JSON файл оруулна уу.</div>
+  </div>
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal-overlay" id="upload-modal">
+  <div class="modal">
+    <h3 id="modal-title">Оролцсон тендер оруулах</h3>
+    <p id="modal-desc">Join_tenders.json файлыг оруулна уу</p>
+    <div class="drop-zone" id="drop-zone">
+      <div style="font-size:36px;margin-bottom:8px">📋</div>
+      <div style="font-size:13px;color:var(--text2)">JSON файл чирж тавих эсвэл дарж сонгох</div>
+      <div class="file-info" id="file-info"></div>
+      <input type="file" id="file-input" accept=".json" style="display:none">
+    </div>
+    <div class="form-error" id="form-error"></div>
+    <div id="upload-result" style="display:none"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Хаах</button>
+      <button class="btn-submit" id="btn-submit" onclick="submitUpload()">Оруулах</button>
+    </div>
+  </div>
+</div>
+
+<!-- Batch OCR Modal -->
+<div class="modal-overlay" id="batch-modal">
+  <div class="modal" style="width:560px;max-height:80vh;overflow-y:auto">
+    <h3>📁 PDF Batch оруулах</h3>
+    <p>Фолдерын замыг зааж өгөхөд доторх PDF файлуудыг тендер дугаараар таниж автомат OCR хийнэ</p>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;margin-bottom:6px">Файлын нэрлэх дүрэм</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;font-family:var(--mono)">
+        тендердугаар_шаардлага.pdf → шаардлага<br>
+        тендердугаар_унасан.pdf → унасан шалтгаан<br>
+        <span style="color:var(--text3)">Жишээ: ЭҮТӨҮГ_20260102126_шаардлага.pdf</span>
+      </div>
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:6px">Фолдерын зам</label>
+      <input style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:13px;padding:10px 14px;outline:none" type="text" id="batch-folder" placeholder="/home/user/Documents/tenders_pdf">
+    </div>
+    <div style="font-size:11px;color:var(--danger);min-height:14px;margin-bottom:8px" id="batch-error"></div>
+    <div id="batch-result" style="display:none;margin-bottom:12px"></div>
+    <div id="batch-progress" style="display:none;text-align:center;padding:20px;color:var(--text3);font-size:13px">
+      <div style="display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:#8b5cf6;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:8px"></div>
+      <div>Файлуудыг уншиж байна... Энэ удаж магадгүй</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button style="flex:1;padding:10px;border-radius:8px;font-size:13px;font-weight:600;background:var(--surface2);border:1px solid var(--border);color:var(--text2);cursor:pointer" onclick="closeBatch()">Хаах</button>
+      <button style="flex:1;padding:10px;border-radius:8px;font-size:13px;font-weight:600;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border:none;color:#fff;cursor:pointer" id="batch-submit" onclick="submitBatch()">Эхлүүлэх</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Panel -->
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="detail-panel" id="detail-panel">
+  <button class="panel-close" onclick="closePanel()">✕</button>
+  <div class="panel-title" id="dp-name"></div>
+  <div class="panel-code" id="dp-code"></div>
+  <div class="panel-badges" id="dp-badges"></div>
+
+  <!-- Үндсэн мэдээлэл -->
+  <div class="panel-section">
+    <div class="panel-section-title">Мэдээлэл</div>
+    <div id="dp-fields"></div>
+  </div>
+
+  <!-- Шаардлага -->
+  <div class="panel-section">
+    <div class="panel-section-title">Шаардлага (PDF/зургаас уншуулах)</div>
+    <div class="ocr-drop" id="dp-ocr-drop">
+      📄 PDF/зураг оруулж шаардлага задлах
+      <div class="ocr-file-info" id="dp-ocr-info"></div>
+      <input type="file" id="dp-ocr-input" accept=".pdf,.png,.jpg,.jpeg" style="display:none">
+    </div>
+    <button class="ocr-btn" id="dp-ocr-btn" onclick="dpOcr()" style="display:none">🔍 OCR + AI шинжлэх</button>
+    <div id="dp-ocr-loading" style="display:none;text-align:center;padding:16px;color:var(--text3);font-size:12px">Шинжилж байна...</div>
+    <textarea class="panel-textarea" id="dp-requirements" placeholder="Тендерийн шаардлагууд энд бичигдэнэ...&#10;OCR-ээр автомат бөглөгдөнө эсвэл гараар бичнэ"></textarea>
+  </div>
+
+  <!-- Унасан шалтгаан -->
+  <div class="panel-section">
+    <div class="panel-section-title">Унасан шалтгаан</div>
+    <div class="ocr-drop" id="dp-fail-drop">
+      📄 Унасан шалтгааны PDF/зураг оруулах
+      <div class="ocr-file-info" id="dp-fail-info"></div>
+      <input type="file" id="dp-fail-input" accept=".pdf,.png,.jpg,.jpeg" style="display:none">
+    </div>
+    <button class="ocr-btn" id="dp-fail-btn" onclick="dpFailOcr()" style="display:none;background:linear-gradient(135deg,var(--danger),#dc2626)">🔍 OCR уншуулах</button>
+    <div id="dp-fail-loading" style="display:none;text-align:center;padding:12px;color:var(--text3);font-size:12px">Уншиж байна...</div>
+    <textarea class="panel-textarea" id="dp-fail" placeholder="Яагаад шалгараагүй вэ? Шалтгаан бичнэ...&#10;PDF/зургаас автомат уншуулах эсвэл гараар бичнэ" style="min-height:60px"></textarea>
+  </div>
+
+  <!-- Тайлбар -->
+  <div class="panel-section">
+    <div class="panel-section-title">Тайлбар</div>
+    <textarea class="panel-textarea" id="dp-notes" placeholder="Нэмэлт тэмдэглэл..." style="min-height:60px"></textarea>
+  </div>
+
+  <button class="panel-save" id="dp-save" onclick="saveDetail()">Хадгалах</button>
+  <div class="save-msg" id="dp-save-msg"></div>
+
+  <!-- Cross Analysis -->
+  <div class="panel-section" style="margin-top:16px">
+    <div class="panel-section-title">AI Дүн шинжилгээ</div>
+    <button class="ocr-btn" onclick="runAnalysis()" id="dp-analysis-btn" style="background:linear-gradient(135deg,#f59e0b,#d97706)">🔍 Шаардлага × Шалтгаан харьцуулах</button>
+    <div id="dp-analysis-loading" style="display:none;text-align:center;padding:16px;color:var(--text3);font-size:12px">AI шинжилж байна...</div>
+    <div id="dp-analysis-result" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+let S = { page:1, perPage:30, total:0, data:[] };
+let timer = null;
+
+async function checkAuth() {
+  try {
+    const r = await fetch('/api/me');
+    if (r.ok) { const d = await r.json(); if (d.logged_in) { currentUser = d.user; showApp(); return; } }
+  } catch(e) {}
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+
+function showApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('main-app').style.display = 'flex';
+  document.getElementById('user-badge').innerHTML = currentUser.full_name + `<span class="role-badge ${currentUser.role}">${currentUser.role}</span>`;
+  const canEdit = currentUser.role === 'admin' || currentUser.role === 'editor';
+  document.getElementById('btn-upload').style.display = canEdit ? '' : 'none';
+  document.getElementById('btn-upload-won').style.display = canEdit ? '' : 'none';
+  document.getElementById('btn-batch').style.display = canEdit ? '' : 'none';
+  loadStats();
+  load();
+}
+
+async function doLogout() { await fetch('/api/logout',{method:'POST'}); window.location.href='/'; }
+function debounce() { clearTimeout(timer); timer = setTimeout(()=>{ S.page=1; load(); }, 300); }
+function filterStat(type) {
+  document.querySelectorAll('.stat-item').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  if (type === 'won') { document.getElementById('f-won').value = 'yes'; }
+  else if (type === 'lost') { document.getElementById('f-won').value = 'no'; document.getElementById('f-status').value = 'Үр дүн гарсан'; }
+  else { document.getElementById('f-won').value = ''; document.getElementById('f-status').value = ''; }
+  S.page = 1;
+  load();
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch('/api/joined-tenders/stats');
+    if (!r.ok) return;
+    const d = await r.json();
+    document.getElementById('st-total').textContent = d.stats.total || 0;
+    document.getElementById('st-won').textContent = d.stats.won || 0;
+    document.getElementById('st-lost').textContent = d.stats.lost || 0;
+    document.getElementById('st-orgs').textContent = d.stats.orgs || 0;
+  } catch(e) {}
+}
+
+async function load() {
+  const status = document.getElementById('f-status').value;
+  const type = document.getElementById('f-type').value;
+  const won = document.getElementById('f-won').value;
+  const search = document.getElementById('search').value.trim();
+  const offset = (S.page-1)*S.perPage;
+  let url = `/api/joined-tenders?limit=${S.perPage}&offset=${offset}`;
+  if (status) url += `&status=${encodeURIComponent(status)}`;
+  if (type) url += `&type=${encodeURIComponent(type)}`;
+  if (won) url += `&won=${won}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return;
+    const d = await r.json();
+    S.data = d.tenders; S.total = d.total;
+    render();
+  } catch(e) {}
+}
+
+function render() {
+  const { data, total, page, perPage } = S;
+  document.getElementById('result-count').textContent = `${total} тендер`;
+  const tbody = document.getElementById('tbody');
+  const empty = document.getElementById('empty');
+  if (!data.length) { tbody.innerHTML=''; empty.style.display='block'; }
+  else {
+    empty.style.display='none';
+    tbody.innerHTML = data.map((t,i) => {
+      const typeCls = t.tender_type==='Бараа'?'badge-goods':t.tender_type==='Ажил'?'badge-work':'badge-open';
+      const stCls = t.status==='Үр дүн гарсан'?'status-done':t.status==='Нээгдсэн'?'status-opened':'status-other';
+      const wonHtml = t.is_won
+        ? '<span class="status-badge status-done">Шалгарсан</span>'
+        : (t.status==='Үр дүн гарсан' ? '<span class="status-badge" style="background:rgba(239,68,68,.08);color:var(--danger)">Унасан</span>' : '<span style="font-size:11px;color:var(--text3)">—</span>');
+      return `<tr style="cursor:pointer" onclick="openPanelIdx(${i})">
+        <td class="td-num">${(page-1)*perPage+i+1}</td>
+        <td class="td-code">${t.link?`<a href="${esc(t.link)}" target="_blank" onclick="event.stopPropagation()">${esc(t.tender_no)}</a>`:esc(t.tender_no)}</td>
+        <td class="td-name">${esc(t.name)}</td>
+        <td class="td-org" title="${esc(t.organization)}">${esc(t.organization)}</td>
+        <td><span class="badge ${typeCls}">${esc(t.tender_type)}</span></td>
+        <td style="font-size:11px;color:var(--text2)">${esc(t.method)}</td>
+        <td><span class="status-badge ${stCls}">${esc(t.status)}</span></td>
+        <td>${wonHtml}</td>
+        <td>${t.link?`<a href="${esc(t.link)}" target="_blank" style="color:var(--accent2);font-size:11px;text-decoration:none">Үзэх →</a>`:''}</td>
+      </tr>`;
+    }).join('');
+  }
+  const maxP = Math.max(1, Math.ceil(total/perPage));
+  const pages=[]; for(let p=Math.max(1,page-2);p<=Math.min(maxP,page+2);p++) pages.push(p);
+  document.getElementById('pagination').innerHTML = `
+    <div class="page-info">Нийт <b>${total}</b> &middot; <b>${maxP}</b> хуудас</div>
+    <div class="page-btns">
+      <button class="page-btn" onclick="pg(1)" ${page<=1?'disabled':''}>«</button>
+      <button class="page-btn" onclick="pg(${page-1})" ${page<=1?'disabled':''}>‹</button>
+      ${pages.map(p=>`<button class="page-btn${p===page?' current':''}" onclick="pg(${p})">${p}</button>`).join('')}
+      <button class="page-btn" onclick="pg(${page+1})" ${page>=maxP?'disabled':''}>›</button>
+      <button class="page-btn" onclick="pg(${maxP})" ${page>=maxP?'disabled':''}>»</button>
+    </div>`;
+}
+function pg(p) { S.page=Math.max(1,p); load(); }
+function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+
+// Upload
+let selectedFile = null;
+let uploadType = 'joined'; // 'joined' or 'won'
+function openModal(type) {
+  uploadType = type || 'joined';
+  document.getElementById('upload-modal').classList.add('show');
+  document.getElementById('form-error').textContent='';
+  document.getElementById('upload-result').style.display='none';
+  document.getElementById('file-info').textContent='';
+  selectedFile=null;
+  if (uploadType === 'won') {
+    document.getElementById('modal-title').textContent = 'Шалгарсан тендер оруулах';
+    document.getElementById('modal-desc').textContent = 'Шалгарсан тендерүүдийн JSON файлыг оруулна уу';
+  } else {
+    document.getElementById('modal-title').textContent = 'Оролцсон тендер оруулах';
+    document.getElementById('modal-desc').textContent = 'Join_tenders.json файлыг оруулна уу';
+  }
+}
+function closeModal() { document.getElementById('upload-modal').classList.remove('show'); }
+
+const dz=document.getElementById('drop-zone'), fi=document.getElementById('file-input');
+dz.addEventListener('click',()=>fi.click());
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');if(e.dataTransfer.files[0])pick(e.dataTransfer.files[0]);});
+fi.addEventListener('change',e=>{if(e.target.files[0])pick(e.target.files[0]);});
+function pick(f){selectedFile=f;document.getElementById('file-info').textContent=f.name+' ('+(f.size/1024).toFixed(0)+' KB)';}
+
+async function submitUpload() {
+  const errEl=document.getElementById('form-error');
+  const btn=document.getElementById('btn-submit');
+  errEl.textContent='';
+  if(!selectedFile){errEl.textContent='JSON файл сонгоно уу';return;}
+
+  btn.disabled=true; btn.textContent='Оруулж байна...';
+  try {
+    const text = await selectedFile.text();
+    const tenders = JSON.parse(text);
+    if(!Array.isArray(tenders)){errEl.textContent='JSON массив байх ёстой';btn.disabled=false;btn.textContent='Оруулах';return;}
+
+    const apiUrl = uploadType === 'won' ? '/api/won-tenders/upload' : '/api/joined-tenders/upload';
+    const r = await fetch(apiUrl,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tenders})
+    });
+    const data = await r.json();
+    if(r.ok && data.success){
+      const s=data.summary;
+      document.getElementById('upload-result').innerHTML=`
+        <div class="upload-result">
+          <h4>Амжилттай!</h4>
+          <div class="row"><span class="label">Нийт</span><span class="val">${s.total}</span></div>
+          <div class="row"><span class="label">Шинэ</span><span class="val green">+${s.inserted}</span></div>
+          <div class="row"><span class="label">Шинэчлэгдсэн</span><span class="val blue">${s.updated}</span></div>
+        </div>`;
+      document.getElementById('upload-result').style.display='block';
+      loadStats(); load();
+    } else { errEl.textContent=data.error||'Алдаа'; }
+  } catch(e){errEl.textContent='Файл уншиж чадсангүй: '+e.message;}
+  btn.disabled=false; btn.textContent='Оруулах';
+}
+
+// ── BATCH OCR ──
+function openBatch() {
+  document.getElementById('batch-modal').classList.add('show');
+  document.getElementById('batch-error').textContent = '';
+  document.getElementById('batch-result').style.display = 'none';
+  document.getElementById('batch-progress').style.display = 'none';
+  document.getElementById('batch-folder').value = '';
+}
+function closeBatch() { document.getElementById('batch-modal').classList.remove('show'); }
+
+async function submitBatch() {
+  const folder = document.getElementById('batch-folder').value.trim();
+  if (!folder) { document.getElementById('batch-error').textContent = 'Фолдерын зам оруулна уу'; return; }
+
+  document.getElementById('batch-error').textContent = '';
+  document.getElementById('batch-progress').style.display = '';
+  document.getElementById('batch-submit').disabled = true;
+
+  try {
+    const r = await fetch('/api/ocr/batch', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ folder })
+    });
+    const d = await r.json();
+    document.getElementById('batch-progress').style.display = 'none';
+
+    if (!r.ok) {
+      document.getElementById('batch-error').textContent = d.error || 'Алдаа';
+      document.getElementById('batch-submit').disabled = false;
+      return;
+    }
+
+    // Үр дүн
+    let html = `<div style="padding:14px;border-radius:8px;background:var(--surface2);border:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:600;color:var(--goods);margin-bottom:8px">Дууслаа!</div>
+      <div style="display:flex;gap:16px;font-size:13px;margin-bottom:10px">
+        <span>Нийт: <b>${d.total_files}</b></span>
+        <span style="color:var(--goods)">Амжилттай: <b>${d.processed}</b></span>
+        <span style="color:var(--danger)">Алдаа: <b>${d.errors}</b></span>
+        <span style="color:var(--text3)">Алгассан: <b>${d.skipped}</b></span>
+      </div>`;
+
+    if (d.results && d.results.length) {
+      html += `<div style="max-height:200px;overflow-y:auto;font-size:11px;font-family:var(--mono)">`;
+      d.results.forEach(r => {
+        const color = r.status === 'ok' ? 'var(--goods)' : r.status === 'error' ? 'var(--danger)' : 'var(--text3)';
+        const icon = r.status === 'ok' ? '✓' : r.status === 'error' ? '✕' : '—';
+        const typeLabel = r.type === 'requirements' ? 'шаардлага' : r.type === 'fail_reason' ? 'унасан' : '';
+        html += `<div style="padding:3px 0;color:${color}">${icon} ${r.file} ${typeLabel ? '→ '+typeLabel : ''} ${r.reason||''}</div>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
+    document.getElementById('batch-result').innerHTML = html;
+    document.getElementById('batch-result').style.display = '';
+    load();
+  } catch(e) {
+    document.getElementById('batch-progress').style.display = 'none';
+    document.getElementById('batch-error').textContent = 'Сервертэй холбогдож чадсангүй';
+  }
+  document.getElementById('batch-submit').disabled = false;
+}
+
+// ── DETAIL PANEL ──
+function openPanelIdx(i) { openPanel(S.data[i]); }
+let currentTender = null;
+let dpOcrFile = null;
+
+function openPanel(tender) {
+  currentTender = tender;
+  dpOcrFile = null;
+
+  document.getElementById('dp-name').textContent = tender.name || '';
+  document.getElementById('dp-code').textContent = tender.tender_no || '';
+
+  // Badges
+  const wonBadge = tender.is_won ? '<span class="badge badge-goods">Шалгарсан</span>' :
+    (tender.status === 'Үр дүн гарсан' ? '<span class="badge" style="background:rgba(239,68,68,.08);color:var(--danger)">Унасан</span>' : '');
+  const typeBadge = `<span class="badge ${tender.tender_type==='Бараа'?'badge-goods':tender.tender_type==='Ажил'?'badge-work':'badge-open'}">${esc(tender.tender_type||'')}</span>`;
+  const stBadge = `<span class="badge" style="background:var(--surface2);color:var(--text3)">${esc(tender.status||'')}</span>`;
+  document.getElementById('dp-badges').innerHTML = [typeBadge, stBadge, wonBadge].filter(Boolean).join(' ');
+
+  // Fields
+  document.getElementById('dp-fields').innerHTML = `
+    <div class="panel-field"><span class="field-label">Байгууллага</span><span class="field-val">${esc(tender.organization||'')}</span></div>
+    <div class="panel-field"><span class="field-label">Арга</span><span class="field-val">${esc(tender.method||'')}</span></div>
+    ${tender.link?`<div class="panel-field"><span class="field-label">Холбоос</span><span class="field-val"><a href="${esc(tender.link)}" target="_blank" style="color:var(--accent2);text-decoration:none;font-size:12px">tender.gov.mn →</a></span></div>`:''}`;
+
+  // OCR reset
+  document.getElementById('dp-ocr-info').textContent = '';
+  document.getElementById('dp-ocr-btn').style.display = 'none';
+  document.getElementById('dp-ocr-loading').style.display = 'none';
+  document.getElementById('dp-fail-info').textContent = '';
+  document.getElementById('dp-fail-btn').style.display = 'none';
+  document.getElementById('dp-fail-loading').style.display = 'none';
+  document.getElementById('dp-save-msg').textContent = '';
+  dpFailFile = null;
+
+  // Load saved details
+  document.getElementById('dp-requirements').value = '';
+  document.getElementById('dp-fail').value = tender.fail_reason || '';
+  document.getElementById('dp-notes').value = tender.notes || '';
+
+  fetch(`/api/tender-details/${encodeURIComponent(tender.tender_no)}`)
+    .then(r=>r.json()).then(d=>{
+      if (d.requirements) document.getElementById('dp-requirements').value = d.requirements;
+      if (d.fail_reason) document.getElementById('dp-fail').value = d.fail_reason;
+      if (d.notes) document.getElementById('dp-notes').value = d.notes;
+    }).catch(()=>{});
+
+  document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+
+function closePanel() {
+  document.getElementById('detail-panel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// OCR drop zone in panel
+const dpDz = document.getElementById('dp-ocr-drop');
+const dpFi = document.getElementById('dp-ocr-input');
+dpDz.addEventListener('click', () => dpFi.click());
+dpDz.addEventListener('dragover', e => { e.preventDefault(); dpDz.classList.add('drag-over'); });
+dpDz.addEventListener('dragleave', () => dpDz.classList.remove('drag-over'));
+dpDz.addEventListener('drop', e => { e.preventDefault(); dpDz.classList.remove('drag-over'); if(e.dataTransfer.files[0]) pickDpOcr(e.dataTransfer.files[0]); });
+dpFi.addEventListener('change', e => { if(e.target.files[0]) pickDpOcr(e.target.files[0]); });
+
+function pickDpOcr(f) {
+  dpOcrFile = f;
+  document.getElementById('dp-ocr-info').textContent = f.name;
+  document.getElementById('dp-ocr-btn').style.display = '';
+}
+
+async function dpOcr() {
+  if (!dpOcrFile || !currentTender) return;
+  const btn = document.getElementById('dp-ocr-btn');
+  btn.disabled = true;
+  document.getElementById('dp-ocr-loading').style.display = '';
+
+  const fd = new FormData();
+  fd.append('file', dpOcrFile);
+  fd.append('tender_no', currentTender.tender_no);
+
+  try {
+    const r = await fetch('/api/ocr/upload', { method: 'POST', body: fd });
+    const d = await r.json();
+    document.getElementById('dp-ocr-loading').style.display = 'none';
+
+    // Шаардлагыг textarea-д бөглөх
+    let reqText = '';
+    if (d.requirements && d.requirements.length) {
+      reqText = d.requirements.map(r => `${r.id||''} [${r.category||''}] ${r.text||''}`).join('\n');
+    } else if (d.corrected_text) {
+      reqText = d.corrected_text;
+    } else if (d.ocr_text) {
+      reqText = d.ocr_text;
+    }
+    document.getElementById('dp-requirements').value = reqText;
+  } catch(e) {
+    document.getElementById('dp-ocr-loading').style.display = 'none';
+  }
+  btn.disabled = false;
+}
+
+// Fail reason OCR
+let dpFailFile = null;
+const failDz = document.getElementById('dp-fail-drop');
+const failFi = document.getElementById('dp-fail-input');
+failDz.addEventListener('click', () => failFi.click());
+failDz.addEventListener('dragover', e => { e.preventDefault(); failDz.classList.add('drag-over'); });
+failDz.addEventListener('dragleave', () => failDz.classList.remove('drag-over'));
+failDz.addEventListener('drop', e => { e.preventDefault(); failDz.classList.remove('drag-over'); if(e.dataTransfer.files[0]) pickFailOcr(e.dataTransfer.files[0]); });
+failFi.addEventListener('change', e => { if(e.target.files[0]) pickFailOcr(e.target.files[0]); });
+
+function pickFailOcr(f) {
+  dpFailFile = f;
+  document.getElementById('dp-fail-info').textContent = f.name;
+  document.getElementById('dp-fail-btn').style.display = '';
+}
+
+async function dpFailOcr() {
+  if (!dpFailFile) return;
+  const btn = document.getElementById('dp-fail-btn');
+  btn.disabled = true;
+  document.getElementById('dp-fail-loading').style.display = '';
+
+  const fd = new FormData();
+  fd.append('file', dpFailFile);
+  fd.append('tender_no', currentTender ? currentTender.tender_no : '');
+
+  try {
+    const r = await fetch('/api/ocr/upload', { method: 'POST', body: fd });
+    const d = await r.json();
+    document.getElementById('dp-fail-loading').style.display = 'none';
+    const text = d.corrected_text || d.ocr_text || '';
+    document.getElementById('dp-fail').value = text;
+  } catch(e) {
+    document.getElementById('dp-fail-loading').style.display = 'none';
+  }
+  btn.disabled = false;
+}
+
+async function runAnalysis() {
+  if (!currentTender) return;
+
+  // Эхлээд хадгалах
+  await saveDetail();
+
+  const btn = document.getElementById('dp-analysis-btn');
+  btn.disabled = true;
+  document.getElementById('dp-analysis-loading').style.display = '';
+  document.getElementById('dp-analysis-result').style.display = 'none';
+
+  try {
+    const r = await fetch('/api/ai/cross-analysis', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ tender_no: currentTender.tender_no })
+    });
+    const d = await r.json();
+    document.getElementById('dp-analysis-loading').style.display = 'none';
+
+    if (!r.ok) {
+      document.getElementById('dp-analysis-result').innerHTML = `<div style="color:var(--danger);font-size:12px">${esc(d.error||'Алдаа')}</div>`;
+      document.getElementById('dp-analysis-result').style.display = '';
+      btn.disabled = false;
+      return;
+    }
+
+    let html = '';
+
+    // Summary
+    if (d.summary) {
+      html += `<div class="analysis-summary">${esc(d.summary)}</div>`;
+    }
+
+    // Stats
+    html += `<div class="analysis-stats">
+      <div class="a-stat"><div class="a-stat-num" style="color:var(--text)">${d.total_requirements||0}</div><div class="a-stat-label">Нийт заалт</div></div>
+      <div class="a-stat"><div class="a-stat-num" style="color:var(--goods)">${d.met||0}</div><div class="a-stat-label">Хангасан</div></div>
+      <div class="a-stat"><div class="a-stat-num" style="color:var(--danger)">${d.not_met||0}</div><div class="a-stat-label">Хангаагүй</div></div>
+      <div class="a-stat"><div class="a-stat-num" style="color:var(--compare)">${d.unclear||0}</div><div class="a-stat-label">Тодорхойгүй</div></div>
+    </div>`;
+
+    // Analysis items
+    const items = d.analysis || [];
+    items.forEach(a => {
+      const cls = a.status === 'met' ? 'met' : a.status === 'not_met' ? 'not_met' : 'unclear';
+      const stCls = a.status === 'met' ? 'a-status-met' : a.status === 'not_met' ? 'a-status-not' : 'a-status-unc';
+      const stText = a.status === 'met' ? 'Хангасан' : a.status === 'not_met' ? 'Хангаагүй' : 'Тодорхойгүй';
+      html += `<div class="analysis-item ${cls}">
+        <div class="a-header">
+          <span class="a-id">${esc(a.id||'')}</span>
+          <span class="a-status ${stCls}">${stText}</span>
+        </div>
+        <div class="a-req">${esc(a.requirement||'')}</div>
+        <div class="a-reason">${esc(a.reason||'')}</div>
+        ${a.recommendation ? `<div class="a-rec">→ ${esc(a.recommendation)}</div>` : ''}
+      </div>`;
+    });
+
+    // Lessons
+    if (d.key_lessons && d.key_lessons.length) {
+      html += `<div class="lessons"><div class="lessons-title">Сургамж</div>`;
+      d.key_lessons.forEach(l => { html += `<div class="lesson-item">• ${esc(l)}</div>`; });
+      html += `</div>`;
+    }
+
+    document.getElementById('dp-analysis-result').innerHTML = html;
+    document.getElementById('dp-analysis-result').style.display = '';
+  } catch(e) {
+    document.getElementById('dp-analysis-loading').style.display = 'none';
+    document.getElementById('dp-analysis-result').innerHTML = '<div style="color:var(--danger);font-size:12px">Сервертэй холбогдож чадсангүй</div>';
+    document.getElementById('dp-analysis-result').style.display = '';
+  }
+  btn.disabled = false;
+}
+
+async function saveDetail() {
+  if (!currentTender) return;
+  const btn = document.getElementById('dp-save');
+  btn.disabled = true;
+
+  try {
+    await fetch(`/api/tender-details/${encodeURIComponent(currentTender.tender_no)}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        requirements: document.getElementById('dp-requirements').value,
+        fail_reason: document.getElementById('dp-fail').value,
+        notes: document.getElementById('dp-notes').value
+      })
+    });
+    document.getElementById('dp-save-msg').textContent = 'Хадгалагдлаа!';
+    setTimeout(() => { document.getElementById('dp-save-msg').textContent = ''; }, 2000);
+  } catch(e) {
+    document.getElementById('dp-save-msg').textContent = 'Алдаа гарлаа';
+    document.getElementById('dp-save-msg').style.color = 'var(--danger)';
+  }
+  btn.disabled = false;
+}
+
+document.addEventListener('DOMContentLoaded', checkAuth);
+</script>
+</body>
+</html>
