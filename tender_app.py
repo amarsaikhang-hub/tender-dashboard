@@ -58,7 +58,7 @@ _openai_key = os.environ.get("OPENAI_API_KEY", "")
 claude_client = anthropic.Anthropic(api_key=_anthropic_key) if _anthropic_key else None
 openai_client = openai.OpenAI(api_key=_openai_key) if _openai_key else None
 
-CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-5")
+CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-6")
 
 
 # ============================================================
@@ -281,13 +281,16 @@ def init_db():
     # Анхдагч admin
     cur.execute("SELECT id FROM users WHERE username = %s", ("admin",))
     if not cur.fetchone():
-        pw_hash = generate_password_hash("admin123")
+        default_pw = os.environ.get("ADMIN_PASSWORD", "admin123")
+        pw_hash = generate_password_hash(default_pw)
         cur.execute(
             "INSERT INTO users (username, password_hash, full_name, role) VALUES (%s, %s, %s, %s)",
             ("admin", pw_hash, "Админ", "admin")
         )
         conn.commit()
-        print("[tender] Анхдагч хэрэглэгч: admin / admin123")
+        if default_pw == "admin123":
+            logging.warning("АНХААРУУЛГА: Анхдагч нууц үг ашиглагдаж байна. ADMIN_PASSWORD env var тохируулна уу.")
+        print(f"[tender] Анхдагч хэрэглэгч: admin / {default_pw}")
 
     release_db(conn)
 
@@ -2350,7 +2353,7 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print(f"[tender] PostgreSQL: {DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['dbname']}")
     print(f"[tender] Сервер эхэллээ: http://localhost:{port}")
-    print(f"[tender] Анхдагч нэвтрэх: admin / admin123")
+    print(f"[tender] Анхдагч нэвтрэх: admin / $ADMIN_PASSWORD")
     print(f"[tender] Эрхүүд: admin (бүх эрх), editor (мэдээлэл оруулах), viewer (зөвхөн харах)")
     print(f"[tender] Худалдан авалтын төлөвлөгөө: Excel upload дэмжигдэнэ")
     debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
