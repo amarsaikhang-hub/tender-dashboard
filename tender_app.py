@@ -502,7 +502,8 @@ def get_tenders():
     offset = int(request.args.get("offset", 0))
 
     rows = query("""
-        SELECT tender_no, name, organization, type, method, deadline, electronic, link
+        SELECT tender_no, name, organization, type, method, deadline, electronic, link,
+               created_at, updated_at
         FROM tenders ORDER BY deadline ASC LIMIT %s OFFSET %s
     """, (limit, offset), fetchall=True)
 

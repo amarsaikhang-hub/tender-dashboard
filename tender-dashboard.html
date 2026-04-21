@@ -366,6 +366,7 @@ td { padding:14px 16px; vertical-align:middle; }
       </div>
       <div class="sidebar-section"><div class="sidebar-title">Тендерийн төрөл</div><div class="filter-group" id="type-filters"></div></div>
       <div class="sidebar-section"><div class="sidebar-title">Шалгаруулалтын арга</div><div class="filter-group" id="method-filters"></div></div>
+      <div class="sidebar-section"><div class="sidebar-title">Шинэчлэгдсэн</div><div class="filter-group" id="added-filters"></div></div>
       <div class="sidebar-section"><div class="sidebar-title">Хугацаа</div><div class="filter-group" id="deadline-filters"></div></div>
       <div class="sidebar-section"><div class="sidebar-title">Байгууллага</div><div class="org-list" id="org-list"></div></div>
     </aside>
@@ -633,7 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
 const COLORS = ['#00e5a0','#4a9eff','#f5a623','#a78bfa','#ff5f6e','#34d399','#f472b6','#60a5fa','#fb923c','#a3e635','#38bdf8','#e879f9','#4ade80','#facc15','#c084fc','#22d3ee'];
 let DATA = [], orgColor = {}, TODAY = new Date();
 TODAY.setHours(0,0,0,0);
-let S = { search:'', type:'all', method:'all', deadline:'all', org:null, page:1, perPage:25, filtered:[] };
+let S = { search:'', type:'all', method:'all', deadline:'all', added:'all', org:null, page:1, perPage:25, filtered:[] };
 
 // ── UPLOAD ──
 const box = document.getElementById('upload-box');
@@ -754,7 +755,7 @@ function init(data, fname) {
   document.getElementById('upload-screen').classList.add('hidden');
   document.getElementById('main-app').style.display = 'flex';
   try { buildSidebar(orgs); } catch(e) { console.error('Sidebar алдаа:', e); }
-  S = { search:'', type:'all', method:'all', deadline:'all', org:null, page:1, perPage:25, filtered:[] };
+  S = { search:'', type:'all', method:'all', deadline:'all', added:'all', org:null, page:1, perPage:25, filtered:[] };
   applyFilters();
 }
 
@@ -805,6 +806,18 @@ function buildSidebar(orgs) {
     <button class="filter-btn" onclick="setF('deadline',this,'week','deadline-filters')">7 хоногт дуусах<span class="count">${DATA.filter(r=>isWithin(r.deadline,7)).length}</span></button>
     <button class="filter-btn" onclick="setF('deadline',this,'month','deadline-filters')">Сар дотор<span class="count">${DATA.filter(r=>isWithin(r.deadline,30)).length}</span></button>`;
 
+  // Added (created_at) шүүлт
+  const now = new Date();
+  const h24 = new Date(now); h24.setDate(h24.getDate()-1);
+  const h72 = new Date(now); h72.setDate(h72.getDate()-3);
+  const h168 = new Date(now); h168.setDate(h168.getDate()-7);
+  const addedCnt = d => DATA.filter(r => r.created_at && new Date(r.created_at) >= d).length;
+  document.getElementById('added-filters').innerHTML = `
+    <button class="filter-btn active" onclick="setF('added',this,'all','added-filters')">Бүх үе<span class="count">${DATA.length}</span></button>
+    <button class="filter-btn" onclick="setF('added',this,'24h','added-filters')">Сүүлийн 24 цаг<span class="count">${addedCnt(h24)}</span></button>
+    <button class="filter-btn" onclick="setF('added',this,'3d','added-filters')">Сүүлийн 3 хоног<span class="count">${addedCnt(h72)}</span></button>
+    <button class="filter-btn" onclick="setF('added',this,'7d','added-filters')">Сүүлийн 7 хоног<span class="count">${addedCnt(h168)}</span></button>`;
+
   // Orgs
   document.getElementById('org-list').innerHTML = orgs.sort().map(o => {
     const c = DATA.filter(r=>r.organization===o).length;
@@ -839,6 +852,14 @@ function applyFilters() {
     if(S.deadline==='today' && !isToday(r.deadline)) return false;
     if(S.deadline==='week' && !isWithin(r.deadline,7)) return false;
     if(S.deadline==='month' && !isWithin(r.deadline,30)) return false;
+    if(S.added && S.added !== 'all' && r.created_at) {
+      const created = new Date(r.created_at);
+      const now = new Date();
+      const hours = (now - created) / (1000*60*60);
+      if(S.added==='24h' && hours > 24) return false;
+      if(S.added==='3d' && hours > 72) return false;
+      if(S.added==='7d' && hours > 168) return false;
+    } else if(S.added && S.added !== 'all' && !r.created_at) return false;
     return true;
   });
   const sort = document.getElementById('sort-select').value;
