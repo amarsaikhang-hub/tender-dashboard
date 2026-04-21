@@ -6,14 +6,19 @@
 
 import os
 import io
+import logging
 import psycopg2
 import psycopg2.extras
-import hashlib
+import psycopg2.pool
 import secrets
+from decimal import Decimal
+from werkzeug.security import generate_password_hash, check_password_hash
 import json
 from datetime import datetime
 from functools import wraps
 from flask import Flask, request, jsonify, session, send_file
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import openpyxl
 import anthropic
 import openai
@@ -21,8 +26,12 @@ import pytesseract
 from PIL import Image
 from pdf2image import convert_from_bytes
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+
 app = Flask(__name__, static_folder=None)
 app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
+
+limiter = Limiter(get_remote_address, app=app, default_limits=[])
 
 DB_CONFIG = {
     "host": os.environ.get("DB_HOST", "localhost"),
@@ -39,18 +48,40 @@ PROCUREMENT_PATH = os.path.join(BASE_DIR, "procurement.html")
 JOINED_PATH = os.path.join(BASE_DIR, "joined.html")
 SUGGESTED_PATH = os.path.join(BASE_DIR, "suggested.html")
 
+# ============================================================
+# AI CLIENTS — нэг удаа үүсгэх
+# ============================================================
+
+_anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
+_openai_key = os.environ.get("OPENAI_API_KEY", "")
+
+claude_client = anthropic.Anthropic(api_key=_anthropic_key) if _anthropic_key else None
+openai_client = openai.OpenAI(api_key=_openai_key) if _openai_key else None
+
+CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-5")
+
 
 # ============================================================
 # DATABASE
 # ============================================================
 
+_pool: psycopg2.pool.ThreadedConnectionPool | None = None
+
+def get_pool() -> psycopg2.pool.ThreadedConnectionPool:
+    global _pool
+    if _pool is None:
+        _pool = psycopg2.pool.ThreadedConnectionPool(2, 20, **DB_CONFIG)
+    return _pool
+
 def get_db():
-    conn = psycopg2.connect(**DB_CONFIG)
+    conn = get_pool().getconn()
     conn.autocommit = False
     return conn
 
+def release_db(conn):
+    get_pool().putconn(conn)
+
 def query(sql, params=None, fetchone=False, fetchall=False, commit=False):
-    """Нэг query ажиллуулах helper"""
     conn = get_db()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -67,7 +98,7 @@ def query(sql, params=None, fetchone=False, fetchall=False, commit=False):
         conn.rollback()
         raise
     finally:
-        conn.close()
+        release_db(conn)
 
 def init_db():
     conn = get_db()
@@ -250,7 +281,7 @@ def init_db():
     # Анхдагч admin
     cur.execute("SELECT id FROM users WHERE username = %s", ("admin",))
     if not cur.fetchone():
-        pw_hash = hashlib.sha256("admin123".encode()).hexdigest()
+        pw_hash = generate_password_hash("admin123")
         cur.execute(
             "INSERT INTO users (username, password_hash, full_name, role) VALUES (%s, %s, %s, %s)",
             ("admin", pw_hash, "Админ", "admin")
@@ -258,7 +289,16 @@ def init_db():
         conn.commit()
         print("[tender] Анхдагч хэрэглэгч: admin / admin123")
 
-    conn.close()
+    release_db(conn)
+
+
+def dec(obj):
+    """JSON serialize helper — Decimal болон datetime хөрвүүлэх"""
+    if isinstance(obj, Decimal):
+        return float(obj)
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    return obj
 
 
 # ============================================================
@@ -290,6 +330,7 @@ def editor_required(f):
 # ============================================================
 
 @app.route("/api/login", methods=["POST"])
+@limiter.limit("10 per minute")
 def login():
     data = request.get_json()
     username = data.get("username", "").strip()
@@ -298,13 +339,12 @@ def login():
     if not username or not password:
         return jsonify({"error": "Хэрэглэгчийн нэр, нууц үг оруулна уу"}), 400
 
-    pw_hash = hashlib.sha256(password.encode()).hexdigest()
     user = query(
-        "SELECT id, username, full_name, role FROM users WHERE username = %s AND password_hash = %s",
-        (username, pw_hash), fetchone=True
+        "SELECT id, username, full_name, role, password_hash FROM users WHERE username = %s",
+        (username,), fetchone=True
     )
 
-    if not user:
+    if not user or not check_password_hash(user["password_hash"], password):
         return jsonify({"error": "Хэрэглэгчийн нэр эсвэл нууц үг буруу"}), 401
 
     session["user_id"] = user["id"]
@@ -369,7 +409,7 @@ def create_user():
     if not username or not password or not full_name:
         return jsonify({"error": "Бүх талбарыг бөглөнө үү"}), 400
 
-    pw_hash = hashlib.sha256(password.encode()).hexdigest()
+    pw_hash = generate_password_hash(password)
     try:
         query(
             "INSERT INTO users (username, password_hash, full_name, role) VALUES (%s, %s, %s, %s)",
@@ -475,7 +515,7 @@ def upload_tenders():
         conn.rollback()
         raise
     finally:
-        conn.close()
+        release_db(conn)
 
     return jsonify({
         "success": True,
@@ -601,7 +641,7 @@ def procurement_pending():
         conn.rollback()
         raise
     finally:
-        conn.close()
+        release_db(conn)
 
     return jsonify({
         "total": stats["total"],
@@ -804,7 +844,7 @@ def upload_procurement():
         """, (user_id, file.filename, organization, plan_year, total, inserted, updated))
 
         conn.commit()
-        conn.close()
+        release_db(conn)
         wb.close()
 
         return jsonify({
@@ -967,7 +1007,7 @@ def upload_joined_tenders():
         conn.rollback()
         raise
     finally:
-        conn.close()
+        release_db(conn)
 
     return jsonify({
         "success": True,
@@ -1025,7 +1065,7 @@ def upload_won_tenders():
         conn.rollback()
         raise
     finally:
-        conn.close()
+        release_db(conn)
 
     return jsonify({"success": True, "summary": {"total": len(tenders), "inserted": inserted, "updated": updated}})
 
@@ -1129,7 +1169,7 @@ def save_tender_detail(tender_no):
                        VALUES (%s,%s,%s,%s,%s,%s)""",
                     (tender_no, requirements, fail_reason, notes, ocr_text, user_id))
     conn.commit()
-    conn.close()
+    release_db(conn)
     return jsonify({"success": True})
 
 
@@ -1169,7 +1209,7 @@ def ocr_upload():
         return jsonify({"error": "Текст уншиж чадсангүй. Зургийн чанарыг шалгана уу."}), 400
 
     # 2) Claude-аар засварлаж шаардлага задлах
-    client = get_claude()
+    client = claude_client
     if not client:
         return jsonify({
             "ocr_text": raw_text,
@@ -1180,7 +1220,7 @@ def ocr_upload():
 
     try:
         msg = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model=CLAUDE_MODEL,
             max_tokens=3000,
             messages=[{
                 "role": "user",
@@ -1204,13 +1244,13 @@ OCR ТЕКСТ:
         result = None
         try:
             result = json.loads(raw)
-        except:
+        except (json.JSONDecodeError, ValueError):
             start = raw.find('{')
             end = raw.rfind('}')
             if start >= 0 and end > start:
                 try:
                     result = json.loads(raw[start:end+1])
-                except:
+                except (json.JSONDecodeError, ValueError):
                     pass
 
         if not result:
@@ -1234,10 +1274,10 @@ OCR ТЕКСТ:
                             cur2.execute("INSERT INTO tender_embeddings (tender_no, chunk_index, chunk_text, embedding) VALUES (%s,%s,%s,%s)",
                                          (tender_no, i, ch, str(em)))
                         conn2.commit()
-                        conn2.close()
+                        release_db(conn2)
                         result["embedding_chunks"] = len(chunks)
-            except:
-                pass
+            except Exception as e:
+                logging.warning("OCR embedding алдаа: %s", e)
 
         return jsonify(result)
 
@@ -1254,11 +1294,6 @@ OCR ТЕКСТ:
 # EMBEDDING — OpenAI text-embedding-3-small + pgvector
 # ============================================================
 
-def get_openai():
-    key = os.environ.get("OPENAI_API_KEY", "")
-    if not key:
-        return None
-    return openai.OpenAI(api_key=key)
 
 
 def chunk_text(text, max_len=500):
@@ -1281,7 +1316,7 @@ def chunk_text(text, max_len=500):
 
 def embed_texts(texts):
     """OpenAI embedding авах"""
-    client = get_openai()
+    client = openai_client
     if not client:
         return None
     resp = client.embeddings.create(model="text-embedding-3-small", input=texts)
@@ -1323,7 +1358,7 @@ def store_embedding():
             VALUES (%s, %s, %s, %s, 'ocr')
         """, (tender_no, i, chunk, str(emb)))
     conn.commit()
-    conn.close()
+    release_db(conn)
 
     return jsonify({"success": True, "chunks": len(chunks), "tender_no": tender_no})
 
@@ -1394,7 +1429,7 @@ def batch_embedding():
                     VALUES (%s, %s, %s, %s, 'ocr')
                 """, (d["tender_no"], i, chunk, str(emb)))
             conn.commit()
-            conn.close()
+            release_db(conn)
             processed += 1
         except Exception as e:
             errors += 1
@@ -1407,7 +1442,7 @@ def batch_embedding():
 def cross_analysis():
     """В урсгал: Шаардлагын заалт × pgvector chunk → Claude cross-analysis
     Тендер бүрт шаардлага хангасан/хангаагүй дүгнэлт гаргах"""
-    client = get_claude()
+    client = claude_client
     if not client:
         return jsonify({"error": "ANTHROPIC_API_KEY тохируулаагүй"}), 500
 
@@ -1442,7 +1477,7 @@ def cross_analysis():
 
     # 4) Claude cross-analysis
     msg = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model=CLAUDE_MODEL,
         max_tokens=3000,
         messages=[{
             "role": "user",
@@ -1488,13 +1523,13 @@ JSON хариул:
     result = None
     try:
         result = json.loads(raw)
-    except:
+    except (json.JSONDecodeError, ValueError):
         start = raw.find('{')
         end = raw.rfind('}')
         if start >= 0 and end > start:
             try:
                 result = json.loads(raw[start:end+1])
-            except:
+            except (json.JSONDecodeError, ValueError):
                 pass
     if not result:
         result = {"summary": raw[:500], "analysis": []}
@@ -1515,9 +1550,9 @@ JSON хариул:
                               VALUES (%s, 0, %s, %s, 'analysis')""",
                             (tender_no, analysis_text[:2000], str(embs[0])))
                 conn.commit()
-                conn.close()
-    except:
-        pass
+                release_db(conn)
+    except Exception as e:
+        logging.warning("Cross-analysis embedding алдаа: %s", e)
 
     result["tender_no"] = tender_no
     return jsonify(result)
@@ -1553,7 +1588,7 @@ def ocr_batch():
     if not files:
         return jsonify({"error": "Фолдерт PDF/зураг файл олдсонгүй"}), 400
 
-    client = get_claude()
+    client = claude_client
     user_id = session["user_id"]
     results = []
     processed = 0
@@ -1599,7 +1634,7 @@ def ocr_batch():
             if client:
                 try:
                     msg = client.messages.create(
-                        model="claude-sonnet-4-20250514",
+                        model=CLAUDE_MODEL,
                         max_tokens=2000,
                         messages=[{
                             "role": "user",
@@ -1607,8 +1642,8 @@ def ocr_batch():
                         }]
                     )
                     final_text = msg.content[0].text.strip()
-                except:
-                    pass
+                except Exception as e:
+                    logging.warning("Batch OCR Claude засвар алдаа: %s", e)
 
             # DB хадгалах
             conn = get_db()
@@ -1632,7 +1667,7 @@ def ocr_batch():
                                 (tender_no, final_text, user_id))
 
             conn.commit()
-            conn.close()
+            release_db(conn)
             processed += 1
             results.append({"file": fname, "tender_no": tender_no, "type": doc_type, "status": "ok"})
 
@@ -1677,7 +1712,7 @@ def clear_table(table_name):
     count = cur.fetchone()[0]
     cur.execute(f"DELETE FROM {allowed[table_name]}")
     conn.commit()
-    conn.close()
+    release_db(conn)
 
     return jsonify({"success": True, "deleted": count, "table": table_name})
 
@@ -1712,7 +1747,7 @@ def export_table(table_name):
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute(f"SELECT * FROM {table_name} ORDER BY id")
     rows = cur.fetchall()
-    conn.close()
+    release_db(conn)
 
     if not rows:
         return jsonify({"error": "Хоосон хүснэгт"}), 404
@@ -1753,18 +1788,13 @@ def export_table(table_name):
 # AI — Claude Integration
 # ============================================================
 
-def get_claude():
-    key = os.environ.get("ANTHROPIC_API_KEY", "")
-    if not key:
-        return None
-    return anthropic.Anthropic(api_key=key)
 
 
 @app.route("/api/ai/match", methods=["POST"])
 @login_required
 def ai_match():
     """AI ашиглаж төлөвлөгөө <-> тендер нэр тулгах"""
-    client = get_claude()
+    client = claude_client
     if not client:
         return jsonify({"error": "ANTHROPIC_API_KEY тохируулаагүй байна"}), 500
 
@@ -1778,7 +1808,7 @@ def ai_match():
     cand_text = "\n".join([f"- [{c['tender_no']}] {c['name']}" for c in candidates[:30]])
 
     msg = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model=CLAUDE_MODEL,
         max_tokens=500,
         messages=[{
             "role": "user",
@@ -1797,7 +1827,7 @@ def ai_match():
 
     try:
         result = json.loads(msg.content[0].text)
-    except:
+    except (json.JSONDecodeError, ValueError):
         result = {"match": False, "reason": msg.content[0].text}
 
     return jsonify(result)
@@ -1807,7 +1837,7 @@ def ai_match():
 @login_required
 def ai_analyze():
     """AI шинжилгээ — тендер/худалдан авалтын дата дээр асуулт асуух"""
-    client = get_claude()
+    client = claude_client
     if not client:
         return jsonify({"error": "ANTHROPIC_API_KEY тохируулаагүй байна"}), 500
 
@@ -1849,11 +1879,6 @@ def ai_analyze():
         FROM procurement_plans GROUP BY ts_type
     """, fetchall=True)
 
-    from decimal import Decimal
-    def dec(obj):
-        if isinstance(obj, Decimal): return float(obj)
-        if isinstance(obj, datetime): return obj.isoformat()
-        return obj
 
     context = f"""Тендерийн мэдээлэл:
 - Нийт тендер: {tender_stats['total']}, Идэвхтэй: {tender_stats['active']}, Хугацаа дууссан: {tender_stats['expired']}, Байгууллага: {tender_stats['orgs']}
@@ -1867,7 +1892,7 @@ def ai_analyze():
 {json.dumps(recent, default=dec, ensure_ascii=False)}"""
 
     msg = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model=CLAUDE_MODEL,
         max_tokens=1500,
         system="Чи тендер болон худалдан авалтын мэдээлэлд дүн шинжилгээ хийх AI туслах юм. Монгол хэлээр хариул. Товч, тодорхой, ашигтай мэдээлэл өг.",
         messages=[{
@@ -1891,7 +1916,7 @@ def ai_analyze():
 @login_required
 def ai_tender_search():
     """AI тендер хайх, санал болгох, шүүх"""
-    client = get_claude()
+    client = claude_client
     if not client:
         return jsonify({"error": "ANTHROPIC_API_KEY тохируулаагүй"}), 500
 
@@ -1921,7 +1946,7 @@ def ai_tender_search():
     ])
 
     msg = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model=CLAUDE_MODEL,
         max_tokens=1500,
         system="""Чи тендерийн мэдээллийн AI туслах юм. Монгол хэлээр хариул.
 Хэрэглэгч тендер хайж, санал авч, мэдээлэл асууж болно.
@@ -1954,7 +1979,7 @@ def ai_tender_search():
         try:
             tender_json = parts[1].split("###END###")[0].strip()
             found_tenders = json.loads(tender_json)
-        except:
+        except (json.JSONDecodeError, ValueError, IndexError):
             pass
 
     return jsonify({
@@ -1990,7 +2015,7 @@ def get_profile_keywords():
 @editor_required
 def generate_profile():
     """А урсгал: Claude API-аар түлхүүр үг гаргаж profile_keywords-д хадгалах"""
-    client = get_claude()
+    client = claude_client
     if not client:
         return jsonify({"error": "ANTHROPIC_API_KEY тохируулаагүй"}), 500
 
@@ -2003,7 +2028,7 @@ def generate_profile():
     won_names = [w["name"] for w in won if w["name"]]
 
     msg = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model=CLAUDE_MODEL,
         max_tokens=2000,
         messages=[{
             "role": "user",
@@ -2028,13 +2053,13 @@ JSON хариул:
     kw_list = None
     try:
         kw_list = json.loads(raw)
-    except:
+    except (json.JSONDecodeError, ValueError):
         start = raw.find('[')
         end = raw.rfind(']')
         if start >= 0 and end > start:
             try:
                 kw_list = json.loads(raw[start:end+1])
-            except:
+            except (json.JSONDecodeError, ValueError):
                 pass
 
     if not kw_list or not isinstance(kw_list, list):
@@ -2055,7 +2080,7 @@ JSON хариул:
                     (word, weight, cat, weight, cat))
         inserted += 1
     conn.commit()
-    conn.close()
+    release_db(conn)
 
     return jsonify({"success": True, "count": inserted, "keywords": kw_list})
 
@@ -2147,7 +2172,7 @@ def match_tenders():
 @editor_required
 def ai_bulk_match():
     """Бүх төлөвлөгөөг тендертэй AI-аар тулгах"""
-    client = get_claude()
+    client = claude_client
     if not client:
         return jsonify({"error": "ANTHROPIC_API_KEY тохируулаагүй байна"}), 500
 
@@ -2181,7 +2206,7 @@ def ai_bulk_match():
     for plan in unmatched[:20]:  # 20-оор хязгаарлах (API cost)
         try:
             msg = client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model=CLAUDE_MODEL,
                 max_tokens=300,
                 messages=[{
                     "role": "user",
@@ -2199,7 +2224,8 @@ JSON хариул: {{"match": true/false, "tender_no": "...", "confidence": 0.0-
             r["plan_id"] = plan["id"]
             r["plan_name"] = plan["name"]
             results.append(r)
-        except:
+        except Exception as e:
+            logging.warning("Bulk match алдаа [%s]: %s", plan.get("name", "?"), e)
             continue
 
     return jsonify({
@@ -2327,4 +2353,5 @@ if __name__ == "__main__":
     print(f"[tender] Анхдагч нэвтрэх: admin / admin123")
     print(f"[tender] Эрхүүд: admin (бүх эрх), editor (мэдээлэл оруулах), viewer (зөвхөн харах)")
     print(f"[tender] Худалдан авалтын төлөвлөгөө: Excel upload дэмжигдэнэ")
-    app.run(host="0.0.0.0", port=port, debug=True)
+    debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
+    app.run(host="0.0.0.0", port=port, debug=debug)
