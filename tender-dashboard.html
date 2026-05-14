@@ -60,6 +60,9 @@ header { border-bottom:1px solid var(--border); padding:0 32px; height:64px; dis
 .stat-item::after { content:''; position:absolute; bottom:0;left:0;right:0; height:3px; background:linear-gradient(90deg, var(--accent), #06b6d4); transform:scaleX(0); transform-origin:left; transition:transform .3s; border-radius:3px 3px 0 0; }
 .stat-item:hover { background:#f8fafc; }
 .stat-item:hover::after { transform:scaleX(1); }
+.stat-item.clickable { cursor:pointer; }
+.stat-item.clickable.active { background:var(--accent-bg); border-color:rgba(14,165,233,.25); }
+.stat-item.clickable.active::after { transform:scaleX(1); }
 .stat-label { font-family:var(--sans); font-size:11px; font-weight:500; letter-spacing:.05em; color:var(--text3); text-transform:uppercase; margin-bottom:6px; }
 .stat-num { font-family:var(--mono); font-size:30px; font-weight:700; line-height:1; }
 .stat-sub { font-size:11px; color:var(--text3); margin-top:4px; }
@@ -350,9 +353,9 @@ td { padding:14px 16px; vertical-align:middle; }
 
   <div class="stats-bar">
     <div class="stat-item"><div class="stat-label">Нийт тендер</div><div class="stat-num" style="color:var(--accent)" id="st-total">—</div><div class="stat-sub">бүртгэлтэй</div></div>
-    <div class="stat-item"><div class="stat-label">Өнөөдөр дуусах</div><div class="stat-num" style="color:var(--danger)" id="st-today">—</div><div class="stat-sub" id="st-date">—</div></div>
-    <div class="stat-item"><div class="stat-label">Нээлттэй тендер</div><div class="stat-num" style="color:var(--work)" id="st-open">—</div><div class="stat-sub">шалгаруулалтын арга</div></div>
-    <div class="stat-item"><div class="stat-label">Байгууллагын тоо</div><div class="stat-num" style="color:var(--compare)" id="st-orgs">—</div><div class="stat-sub">өөр өөр байгууллага</div></div>
+    <div class="stat-item clickable" id="card-today" onclick="toggleCardFilter('today')"><div class="stat-label">Өнөөдөр дуусах</div><div class="stat-num" style="color:var(--danger)" id="st-today">—</div><div class="stat-sub" id="st-date">—</div></div>
+    <div class="stat-item clickable" id="card-active" onclick="toggleCardFilter('active')"><div class="stat-label">Идэвхтэй тендер</div><div class="stat-num" style="color:var(--work)" id="st-open">—</div><div class="stat-sub">хугацаа дуусаагүй</div></div>
+    <div class="stat-item clickable" id="card-joined" onclick="toggleCardFilter('joined')"><div class="stat-label">Манай байгуул. тендер</div><div class="stat-num" style="color:var(--compare)" id="st-joined">—</div><div class="stat-sub">оролцож байсан байгууллага</div></div>
   </div>
 
   <div class="main">
@@ -366,8 +369,8 @@ td { padding:14px 16px; vertical-align:middle; }
       </div>
       <div class="sidebar-section"><div class="sidebar-title">Тендерийн төрөл</div><div class="filter-group" id="type-filters"></div></div>
       <div class="sidebar-section"><div class="sidebar-title">Шалгаруулалтын арга</div><div class="filter-group" id="method-filters"></div></div>
-      <div class="sidebar-section"><div class="sidebar-title">Шинэчлэгдсэн</div><div class="filter-group" id="added-filters"></div></div>
       <div class="sidebar-section"><div class="sidebar-title">Хугацаа</div><div class="filter-group" id="deadline-filters"></div></div>
+      <div class="sidebar-section"><div class="sidebar-title">Шинэчлэгдсэн огноо</div><div class="filter-group" id="added-filters"></div></div>
       <div class="sidebar-section"><div class="sidebar-title">Байгууллага</div><div class="org-list" id="org-list"></div></div>
     </aside>
 
@@ -634,7 +637,8 @@ document.addEventListener('DOMContentLoaded', () => {
 const COLORS = ['#00e5a0','#4a9eff','#f5a623','#a78bfa','#ff5f6e','#34d399','#f472b6','#60a5fa','#fb923c','#a3e635','#38bdf8','#e879f9','#4ade80','#facc15','#c084fc','#22d3ee'];
 let DATA = [], orgColor = {}, TODAY = new Date();
 TODAY.setHours(0,0,0,0);
-let S = { search:'', type:'all', method:'all', deadline:'all', added:'all', org:null, page:1, perPage:25, filtered:[] };
+let S = { search:'', type:'all', method:'all', deadline:'all', org:null, cardFilter:null, page:1, perPage:25, filtered:[] };
+let JOINED_ORGS = new Set();
 
 // ── UPLOAD ──
 const box = document.getElementById('upload-box');
@@ -648,7 +652,7 @@ fi.addEventListener('change', e => { if(e.target.files[0]) load(e.target.files[0
 
 async function loadFromServer() {
   try {
-    const r = await fetch('/api/tenders');
+    const r = await fetch('/api/tenders?limit=50000');
     if (!r.ok) { console.error('Tenders API алдаа:', r.status); return; }
     const data = await r.json();
     if (data.tenders && data.tenders.length > 0) {
@@ -748,14 +752,15 @@ function init(data, fname) {
   document.getElementById('st-total').textContent = DATA.length;
   document.getElementById('st-today').textContent = DATA.filter(r=>isToday(r.deadline)).length;
   document.getElementById('st-date').textContent = TODAY.toLocaleDateString('mn-MN');
-  document.getElementById('st-open').textContent = DATA.filter(r=>r.method&&r.method.includes('Нээлттэй')).length;
-  document.getElementById('st-orgs').textContent = orgs.length;
+  document.getElementById('st-open').textContent = DATA.filter(r=>r.deadline&&r.deadline>TODAY.toISOString().slice(0,16).replace('T',' ')).length;
+  loadJoinedOrgs();
   document.getElementById('header-meta').textContent = fname + ' · ' + DATA.length + ' тендер';
 
   document.getElementById('upload-screen').classList.add('hidden');
   document.getElementById('main-app').style.display = 'flex';
   try { buildSidebar(orgs); } catch(e) { console.error('Sidebar алдаа:', e); }
-  S = { search:'', type:'all', method:'all', deadline:'all', added:'all', org:null, page:1, perPage:25, filtered:[] };
+  S = { search:'', type:'all', method:'all', deadline:'all', added:'all', org:null, cardFilter:null, page:1, perPage:25, filtered:[] };
+  ['today','active','joined'].forEach(n=>{ const el=document.getElementById('card-'+n); if(el) el.classList.remove('active'); });
   applyFilters();
 }
 
@@ -770,6 +775,7 @@ function resetApp() {
 // ── UTILS ──
 function isToday(d) { const dt=new Date(d); dt.setHours(0,0,0,0); return dt.getTime()===TODAY.getTime(); }
 function isWithin(d,n) { const dt=new Date(d),lim=new Date(TODAY); lim.setDate(lim.getDate()+n); return dt>=TODAY && dt<=lim; }
+function isUpdatedWithin(d,hours) { if(!d) return false; const dt=new Date(d),now=new Date(); return (now-dt)<=hours*3600000; }
 function fmt(s) { const d=new Date(s); return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`; }
 function dlCls(s) { return isToday(s)?'deadline-today':isWithin(s,3)?'deadline-soon':'deadline-ok'; }
 function tBadge(t) {
@@ -806,17 +812,13 @@ function buildSidebar(orgs) {
     <button class="filter-btn" onclick="setF('deadline',this,'week','deadline-filters')">7 хоногт дуусах<span class="count">${DATA.filter(r=>isWithin(r.deadline,7)).length}</span></button>
     <button class="filter-btn" onclick="setF('deadline',this,'month','deadline-filters')">Сар дотор<span class="count">${DATA.filter(r=>isWithin(r.deadline,30)).length}</span></button>`;
 
-  // Added (created_at) шүүлт
-  const now = new Date();
-  const h24 = new Date(now); h24.setDate(h24.getDate()-1);
-  const h72 = new Date(now); h72.setDate(h72.getDate()-3);
-  const h168 = new Date(now); h168.setDate(h168.getDate()-7);
-  const addedCnt = d => DATA.filter(r => r.created_at && new Date(r.created_at) >= d).length;
+  // Added/Updated шүүлт
+  const c24h = DATA.filter(r=>isUpdatedWithin(r.updated_at,24)).length;
+  const c3d  = DATA.filter(r=>isUpdatedWithin(r.updated_at,72)).length;
   document.getElementById('added-filters').innerHTML = `
-    <button class="filter-btn active" onclick="setF('added',this,'all','added-filters')">Бүх үе<span class="count">${DATA.length}</span></button>
-    <button class="filter-btn" onclick="setF('added',this,'24h','added-filters')">Сүүлийн 24 цаг<span class="count">${addedCnt(h24)}</span></button>
-    <button class="filter-btn" onclick="setF('added',this,'3d','added-filters')">Сүүлийн 3 хоног<span class="count">${addedCnt(h72)}</span></button>
-    <button class="filter-btn" onclick="setF('added',this,'7d','added-filters')">Сүүлийн 7 хоног<span class="count">${addedCnt(h168)}</span></button>`;
+    <button class="filter-btn active" onclick="setF('added',this,'all','added-filters')">Бүгд<span class="count">${DATA.length}</span></button>
+    <button class="filter-btn" onclick="setF('added',this,'24h','added-filters')">Сүүлийн 24 цагт<span class="count">${c24h}</span></button>
+    <button class="filter-btn" onclick="setF('added',this,'3d','added-filters')">Сүүлийн 3 хоногт<span class="count">${c3d}</span></button>`;
 
   // Orgs
   document.getElementById('org-list').innerHTML = orgs.sort().map(o => {
@@ -841,8 +843,30 @@ function setOrg(btn, val) {
   applyFilters();
 }
 
+function toggleCardFilter(name) {
+  const nowActive = S.cardFilter === name;
+  S.cardFilter = nowActive ? null : name;
+  ['today','active','joined'].forEach(n => {
+    const el = document.getElementById('card-'+n);
+    if(el) el.classList.toggle('active', S.cardFilter===n);
+  });
+  applyFilters();
+}
+
+async function loadJoinedOrgs() {
+  try {
+    const r = await fetch('/api/joined-tenders/orgs');
+    if(!r.ok) return;
+    const data = await r.json();
+    JOINED_ORGS = new Set(data.orgs || []);
+    const cnt = DATA.filter(r=>JOINED_ORGS.has(r.organization)).length;
+    document.getElementById('st-joined').textContent = cnt;
+  } catch(e) { document.getElementById('st-joined').textContent = '—'; }
+}
+
 function applyFilters() {
   const q = S.search.toLowerCase();
+  const todayStr = TODAY.toISOString().slice(0,16).replace('T',' ');
   let d = DATA.filter(r => {
     if(q && !r.name?.toLowerCase().includes(q) && !r.organization?.toLowerCase().includes(q) && !r.tender_no?.toLowerCase().includes(q)) return false;
     if(S.type!=='all' && r.type!==S.type) return false;
@@ -852,14 +876,11 @@ function applyFilters() {
     if(S.deadline==='today' && !isToday(r.deadline)) return false;
     if(S.deadline==='week' && !isWithin(r.deadline,7)) return false;
     if(S.deadline==='month' && !isWithin(r.deadline,30)) return false;
-    if(S.added && S.added !== 'all' && r.created_at) {
-      const created = new Date(r.created_at);
-      const now = new Date();
-      const hours = (now - created) / (1000*60*60);
-      if(S.added==='24h' && hours > 24) return false;
-      if(S.added==='3d' && hours > 72) return false;
-      if(S.added==='7d' && hours > 168) return false;
-    } else if(S.added && S.added !== 'all' && !r.created_at) return false;
+    if(S.cardFilter==='today' && !isToday(r.deadline)) return false;
+    if(S.cardFilter==='active' && !(r.deadline && r.deadline > todayStr)) return false;
+    if(S.cardFilter==='joined' && !JOINED_ORGS.has(r.organization)) return false;
+    if(S.added==='24h' && !isUpdatedWithin(r.updated_at,24)) return false;
+    if(S.added==='3d' && !isUpdatedWithin(r.updated_at,72)) return false;
     return true;
   });
   const sort = document.getElementById('sort-select').value;

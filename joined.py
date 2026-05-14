@@ -163,6 +163,16 @@ def register(app):
 
         return jsonify({"total": total, "tenders": rows})
 
+    @app.route("/api/joined-tenders/orgs")
+    @login_required
+    def get_joined_orgs():
+        rows = query("""
+            SELECT DISTINCT organization FROM joined_tenders
+            WHERE organization IS NOT NULL AND organization != ''
+            ORDER BY organization
+        """, fetchall=True)
+        return jsonify({"orgs": [r["organization"] for r in rows]})
+
     @app.route("/api/joined-tenders/stats")
     @login_required
     def joined_tender_stats():

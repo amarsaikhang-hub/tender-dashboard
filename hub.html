@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monhorus B2G Hub</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f172a;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Background glow */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: 50%; transform: translateX(-50%);
+    width: 900px; height: 600px;
+    background: radial-gradient(ellipse, rgba(56,189,248,.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -200px; left: 20%;
+    width: 600px; height: 500px;
+    background: radial-gradient(ellipse, rgba(99,102,241,.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .logo-icon {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, #38bdf8, #818cf8);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 8px 24px rgba(56,189,248,.3);
+  }
+
+  .logo-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: -.3px;
+  }
+
+  .logo-text span {
+    color: #38bdf8;
+  }
+
+  h1 {
+    font-size: 48px;
+    font-weight: 800;
+    color: #f8fafc;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+
+  h1 span {
+    background: linear-gradient(135deg, #38bdf8, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-size: 17px;
+    color: #94a3b8;
+    font-weight: 400;
+    letter-spacing: .01em;
+  }
+
+  .cards {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .card {
+    width: 300px;
+    background: rgba(30,41,59,.7);
+    border: 1px solid rgba(148,163,184,.1);
+    border-radius: 24px;
+    padding: 36px 32px 32px;
+    cursor: pointer;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    transition: transform .25s, box-shadow .25s, border-color .25s, background .25s;
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity .3s;
+    border-radius: inherit;
+  }
+
+  .card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(148,163,184,.25);
+    background: rgba(30,41,59,.9);
+  }
+
+  .card:hover::before { opacity: 1; }
+
+  /* Card 1 — Tender Dashboard */
+  .card-tender { --c1: #38bdf8; --c2: #0ea5e9; --glow: rgba(56,189,248,.15); }
+  .card-tender::before { background: radial-gradient(circle at 50% 0%, var(--glow), transparent 60%); }
+  .card-tender:hover { box-shadow: 0 24px 60px rgba(56,189,248,.15), 0 0 0 1px rgba(56,189,248,.2); }
+
+  /* Card 2 — Company Resources */
+  .card-company { --c1: #34d399; --c2: #10b981; --glow: rgba(52,211,153,.15); }
+  .card-company::before { background: radial-gradient(circle at 50% 0%, var(--glow), transparent 60%); }
+  .card-company:hover { box-shadow: 0 24px 60px rgba(52,211,153,.15), 0 0 0 1px rgba(52,211,153,.2); }
+
+  /* Card 3 — Price DB */
+  .card-price { --c1: #a78bfa; --c2: #818cf8; --glow: rgba(167,139,250,.15); }
+  .card-price::before { background: radial-gradient(circle at 50% 0%, var(--glow), transparent 60%); }
+  .card-price:hover { box-shadow: 0 24px 60px rgba(167,139,250,.15), 0 0 0 1px rgba(167,139,250,.2); }
+
+  .card-icon {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    margin-bottom: 24px;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    box-shadow: 0 8px 20px rgba(0,0,0,.25);
+  }
+
+  .card-tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--c1);
+    margin-bottom: 10px;
+  }
+
+  .card-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 12px;
+    letter-spacing: -.3px;
+  }
+
+  .card-desc {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.65;
+    flex: 1;
+    margin-bottom: 28px;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-port {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    color: #475569;
+    background: rgba(71,85,105,.2);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(71,85,105,.3);
+  }
+
+  .card-arrow {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-size: 16px;
+    transition: transform .2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,.2);
+  }
+
+  .card:hover .card-arrow {
+    transform: translate(3px, -3px);
+  }
+
+  .divider {
+    width: 1px;
+    height: 32px;
+    background: rgba(148,163,184,.12);
+    align-self: stretch;
+  }
+
+  .footer {
+    margin-top: 56px;
+    text-align: center;
+    color: #334155;
+    font-size: 12px;
+    position: relative;
+    z-index: 1;
+    letter-spacing: .03em;
+  }
+
+  .status-row {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 32px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .status-dot {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: #475569;
+  }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 6px rgba(34,197,94,.5);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: .4; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">⬡</div>
+    <div class="logo-text">MONHORUS <span>B2G</span></div>
+  </div>
+  <h1>Business to<br><span>Government Hub</span></h1>
+  <p class="subtitle">Integrated platform for tender, resources & pricing</p>
+</div>
+
+<div class="cards">
+
+  <a class="card card-tender" href="http://192.168.6.62:5000" onclick="openApp(event,'http://192.168.6.62:5000')">
+    <div class="card-icon">📋</div>
+    <div class="card-tag">Government Tenders</div>
+    <div class="card-title">Tender Dashboard</div>
+    <div class="card-desc">Monitor and analyze government procurement tenders. Track deadlines, filter by type, and get AI-powered suggestions.</div>
+    <div class="card-footer">
+      <span class="card-port">:5000</span>
+      <div class="card-arrow">→</div>
+    </div>
+  </a>
+
+  <a class="card card-company" href="http://192.168.6.62:5001" onclick="openApp(event,'http://192.168.6.62:5001')">
+    <div class="card-icon">🏢</div>
+    <div class="card-tag">Internal Resources</div>
+    <div class="card-title">Company Resources</div>
+    <div class="card-desc">Manage employees, equipment and contracts. Centralized database for all company resources and capabilities.</div>
+    <div class="card-footer">
+      <span class="card-port">:5001</span>
+      <div class="card-arrow">→</div>
+    </div>
+  </a>
+
+  <a class="card card-price" href="http://192.168.6.62:5002" onclick="openApp(event,'http://192.168.6.62:5002')">
+    <div class="card-icon">💰</div>
+    <div class="card-tag">Price Intelligence</div>
+    <div class="card-title">Price Database</div>
+    <div class="card-desc">AI-powered price proposal database. Search similar items, get market pricing insights and category analysis.</div>
+    <div class="card-footer">
+      <span class="card-port">:5002</span>
+      <div class="card-arrow">→</div>
+    </div>
+  </a>
+
+</div>
+
+<div class="status-row" id="status-row">
+  <div class="status-dot"><span class="dot" style="background:#475569;box-shadow:none"></span> Tender Dashboard</div>
+  <div class="status-dot"><span class="dot" style="background:#475569;box-shadow:none"></span> Company Resources</div>
+  <div class="status-dot"><span class="dot" style="background:#475569;box-shadow:none"></span> Price Database</div>
+</div>
+
+<div class="footer">© 2026 Monhorus LLC · B2G Integrated Platform</div>
+
+<script>
+async function openApp(e, baseUrl) {
+  e.preventDefault();
+  try {
+    const r = await fetch('/api/sso/token', { method: 'POST' });
+    if (r.ok) {
+      const { token } = await r.json();
+      window.open(`${baseUrl}/sso?token=${token}`, '_blank');
+    } else {
+      window.open(baseUrl, '_blank');
+    }
+  } catch(_) {
+    window.open(baseUrl, '_blank');
+  }
+}
+
+async function checkStatus() {
+  try {
+    const r = await fetch('/api/hub/status');
+    if (!r.ok) return;
+    const data = await r.json();
+    const dots = document.querySelectorAll('#status-row .dot');
+    data.forEach((s, i) => {
+      if (dots[i]) {
+        dots[i].style.background = s.up ? '#22c55e' : '#ef4444';
+        dots[i].style.boxShadow = s.up
+          ? '0 0 6px rgba(34,197,94,.5)'
+          : '0 0 6px rgba(239,68,68,.5)';
+      }
+    });
+  } catch(e) {}
+}
+checkStatus();
+</script>
+</body>
+</html>

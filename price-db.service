@@ -1,0 +1,17 @@
+[Unit]
+Description=Price DB Flask Server
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=amarsaikhan
+WorkingDirectory=/home/amarsaikhan/Downloads/price-db
+EnvironmentFile=/home/amarsaikhan/Downloads/price-db/.env
+ExecStart=/home/amarsaikhan/Downloads/price-db/venv/bin/python /home/amarsaikhan/Downloads/price-db/app.py
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/amarsaikhan/Downloads/price-db/logs/server.log
+StandardError=append:/home/amarsaikhan/Downloads/price-db/logs/server.log
+
+[Install]
+WantedBy=multi-user.target

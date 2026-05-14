@@ -22,6 +22,7 @@ import embeddings
 import ocr
 import ai
 import admin
+import hub
 
 
 def create_app() -> Flask:
@@ -39,6 +40,7 @@ def create_app() -> Flask:
     ocr.register(app)
     ai.register(app)
     admin.register(app)
+    hub.register(app)
 
     return app
 

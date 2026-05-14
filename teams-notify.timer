@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Teams Tender Notification daily at 07:00
+Requires=teams-notify.service
+
+[Timer]
+OnCalendar=*-*-* 07:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

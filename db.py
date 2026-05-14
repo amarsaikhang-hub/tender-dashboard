@@ -160,6 +160,18 @@ def init_db():
         )
     """)
 
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS sso_tokens (
+            token TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            username TEXT NOT NULL,
+            full_name TEXT NOT NULL,
+            role TEXT NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
+
     for idx_sql in [
         "CREATE INDEX IF NOT EXISTS idx_emb_tender ON tender_embeddings(tender_no)",
         "CREATE INDEX IF NOT EXISTS idx_tenders_tender_no ON tenders(tender_no)",

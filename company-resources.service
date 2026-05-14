@@ -1,0 +1,18 @@
+
+[Unit]
+Description=Company Resources Flask Server
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=amarsaikhan
+WorkingDirectory=/home/amarsaikhan/Downloads/company-resources
+EnvironmentFile=/home/amarsaikhan/Downloads/company-resources/.env
+ExecStart=/home/amarsaikhan/Downloads/company-resources/venv/bin/python /home/amarsaikhan/Downloads/company-resources/app.py
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/amarsaikhan/Downloads/company-resources/logs/server.log
+StandardError=append:/home/amarsaikhan/Downloads/company-resources/logs/server.log
+
+[Install]
+WantedBy=multi-user.target

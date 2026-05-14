@@ -101,7 +101,7 @@ def register(app):
     @login_required
     def get_tenders():
         total  = query("SELECT COUNT(*) as cnt FROM tenders", fetchone=True)["cnt"]
-        limit  = min(int(request.args.get("limit", 5000)), 10000)
+        limit  = min(int(request.args.get("limit", 20000)), 50000)
         offset = int(request.args.get("offset", 0))
         rows   = query("""
             SELECT tender_no, name, organization, type, method, deadline, electronic, link,
