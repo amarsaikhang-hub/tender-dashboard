@@ -4,9 +4,9 @@ After=network.target postgresql.service
 
 [Service]
 Type=oneshot
-User=amarsaikhan
-WorkingDirectory=/home/amarsaikhan/Downloads/tender-dashboard
-EnvironmentFile=/home/amarsaikhan/Downloads/tender-dashboard/.env
-ExecStart=/home/amarsaikhan/Downloads/tender-dashboard/venv/bin/python /home/amarsaikhan/Downloads/tender-dashboard/teams_notify.py
-StandardOutput=append:/home/amarsaikhan/Downloads/tender-dashboard/logs/teams_notify.log
-StandardError=append:/home/amarsaikhan/Downloads/tender-dashboard/logs/teams_notify.log
+User=Amaraa
+WorkingDirectory=/home/Amaraa/B2G/tender-dashboard
+EnvironmentFile=/home/Amaraa/B2G/tender-dashboard/.env
+ExecStart=/home/Amaraa/B2G/tender-dashboard/venv/bin/python /home/Amaraa/B2G/tender-dashboard/teams_notify.py
+StandardOutput=append:/home/Amaraa/B2G/tender-dashboard/logs/teams_notify.log
+StandardError=append:/home/Amaraa/B2G/tender-dashboard/logs/teams_notify.log

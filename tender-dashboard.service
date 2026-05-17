@@ -4,14 +4,14 @@ After=network.target postgresql.service
 
 [Service]
 Type=simple
-User=amarsaikhan
-WorkingDirectory=/home/amarsaikhan/Downloads/tender-dashboard
-EnvironmentFile=/home/amarsaikhan/Downloads/tender-dashboard/.env
-ExecStart=/home/amarsaikhan/Downloads/tender-dashboard/venv/bin/python /home/amarsaikhan/Downloads/tender-dashboard/tender_app.py
+User=Amaraa
+WorkingDirectory=/home/Amaraa/B2G/tender-dashboard
+EnvironmentFile=/home/Amaraa/B2G/tender-dashboard/.env
+ExecStart=/home/Amaraa/B2G/tender-dashboard/venv/bin/python /home/Amaraa/B2G/tender-dashboard/tender_app.py
 Restart=always
 RestartSec=5
-StandardOutput=append:/home/amarsaikhan/Downloads/tender-dashboard/logs/server.log
-StandardError=append:/home/amarsaikhan/Downloads/tender-dashboard/logs/server.log
+StandardOutput=append:/home/Amaraa/B2G/tender-dashboard/logs/server.log
+StandardError=append:/home/Amaraa/B2G/tender-dashboard/logs/server.log
 
 [Install]
 WantedBy=multi-user.target
